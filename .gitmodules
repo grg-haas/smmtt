@@ -1,0 +1,6 @@
+[submodule "qemu"]
+	path = qemu
+	url = git@github.com:grg-haas/qemu.git
+[submodule "opensbi"]
+	path = opensbi
+	url = git@github.com:grg-haas/opensbi.git
