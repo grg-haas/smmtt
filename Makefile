@@ -68,7 +68,8 @@ clean:
 ## Run recipes ##
 #################
 
-QEMU_RUN_FLAGS	:= -nographic -bios $(OPENSBI_BUILDDIR)/platform/generic/firmware/fw_jump.bin
+QEMU_RUN_FLAGS	:= -machine virt -cpu smmtt -nographic \
+			-bios $(OPENSBI_BUILDDIR)/platform/generic/firmware/fw_jump.bin
 
 run: $(QEMU_BUILDDIR)/qemu-system-riscv64
 	$(QEMU_BUILDDIR)/qemu-system-riscv64 $(QEMU_RUN_FLAGS)

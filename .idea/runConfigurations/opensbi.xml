@@ -1,0 +1,6 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="opensbi" type="CLion_Remote" version="1" remoteCommand="localhost:9822" symbolFile="$PROJECT_DIR$/build/dbg/opensbi/platform/generic/firmware/fw_jump.elf" sysroot="">
+    <debugger kind="GDB">/sbin/riscv64-linux-gnu-gdb</debugger>
+    <method v="2" />
+  </configuration>
+</component>
