@@ -1,6 +1,7 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="opensbi" type="CLion_Remote" version="1" remoteCommand="localhost:9822" symbolFile="$PROJECT_DIR$/build/dbg/opensbi/platform/generic/firmware/fw_jump.elf" sysroot="">
-    <debugger kind="GDB">/sbin/riscv64-linux-gnu-gdb</debugger>
-    <method v="2" />
+  <configuration default="false" name="opensbi" type="CLionNativeAppRunConfigurationType" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="smmtt" TARGET_NAME="opensbi" CONFIG_NAME="opensbi" version="1">
+    <method v="2">
+      <option name="CLION.COMPOUND.BUILD" enabled="true" />
+    </method>
   </configuration>
 </component>
