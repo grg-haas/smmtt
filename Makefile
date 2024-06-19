@@ -33,14 +33,3 @@ $(eval $(call build-opensbi,64))
 .PHONY: clean
 clean:
 	rm -rf $(SMMTT)/build
-
-#################
-## Run recipes ##
-#################
-
-QEMU_RUN_FLAGS		:= -machine virt -cpu smmtt -nographic \
-						-bios $(OPENSBI_BUILDDIR)/platform/generic/firmware/fw_jump.bin
-
-run: $(QEMU_BUILDDIR)/qemu-system-riscv64
-	$(QEMU_BUILDDIR)/qemu-system-riscv$(BITS) $(QEMU_RUN_FLAGS)
-
