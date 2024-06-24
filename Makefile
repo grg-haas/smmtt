@@ -20,11 +20,11 @@ export SMMTT			?= $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
 ## Build recipes ##
 ###################
 
+all: opensbi32 opensbi64 qemu
+
 include mk/utils.mk
 include mk/opensbi.mk
 include mk/qemu.mk
-
-all: opensbi32 opensbi64 qemu
 
 $(eval $(call build-opensbi,32))
 $(eval $(call build-opensbi,64))
