@@ -15,6 +15,7 @@ export DEBUG			?= 0
 
 # Directories
 export SMMTT			?= $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
+export CCACHE_DIR		:= $(SMMTT)/.ccache
 
 ###################
 ## Build recipes ##
@@ -29,7 +30,11 @@ include mk/qemu.mk
 $(eval $(call build-opensbi,32))
 $(eval $(call build-opensbi,64))
 
+
 # Cleaning
 .PHONY: clean
 clean:
 	rm -rf $(SMMTT)/build
+
+.PHONY: clean-opensbi
+clean-opensbi: clean-opensbi32 clean-opensbi64
