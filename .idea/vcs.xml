@@ -3,6 +3,7 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/kvm-unit-tests" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/linux" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/opensbi" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/qemu" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/qemu/subprojects/berkeley-softfloat-3" vcs="Git" />
