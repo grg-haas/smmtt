@@ -7,3 +7,6 @@
 [submodule "kvm-unit-tests"]
 	path = kvm-unit-tests
 	url = git@github.com:grg-haas/kvm-unit-tests.git
+[submodule "linux"]
+	path = linux
+	url = https://github.com/torvalds/linux

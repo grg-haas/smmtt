@@ -100,7 +100,7 @@ typedef enum {
 
 // Permissions
 
-#define MTTL2_2M_PAGES_PERMS        _UL(0b1)
+#define MTTL2_2M_PAGES_PERMS        _ULL(0b1)
 #define MTTL2_2M_PAGES_PERMS_BITS   (1)
 
 typedef enum {
@@ -108,7 +108,7 @@ typedef enum {
     SMMTT_PERMS_2M_PAGES_ALLOWED    = 0b1
 } smmtt_perms_2m_pages_t;
 
-#define MTTL2_RW_2M_PAGES_PERMS         _UL(0b11)
+#define MTTL2_RW_2M_PAGES_PERMS         _ULL(0b11)
 #define MTTL2_RW_2M_PAGES_PERMS_BITS    (2)
 
 typedef enum {
@@ -117,7 +117,7 @@ typedef enum {
     SMMTT_PERMS_2M_PAGES_RW_READ_WRITE  = 0b11
 } smmtt_perms_2m_pages_rw_t;
 
-#define MTTL1_L1_DIR_PERMS             _UL(0b11)
+#define MTTL1_L1_DIR_PERMS             _ULL(0b11)
 #define MTTL1_L1_DIR_PERMS_BITS        (2)
 
 typedef enum {
@@ -125,7 +125,7 @@ typedef enum {
     SMMTT_PERMS_MTT_L1_DIR_ALLOWED      = 0b01,
 } smmtt_perms_mtt_l1_dir_t;
 
-#define MTTL1_RW_L1_DIR_PERMS               _UL(0b1111)
+#define MTTL1_RW_L1_DIR_PERMS               _ULL(0b1111)
 #define MTTL1_RW_L1_DIR_PERMS_BITS          (4)
 
 typedef enum {
@@ -142,7 +142,7 @@ typedef enum {
     ((rw) ? (MTTL##level##_RW_##name##_PERMS_BITS) : (MTTL##level##_##name##_PERMS_BITS))
 
 #define MTT_PERM_FIELD(level, rw, name, idx) \
-    MTT_PERM_MASK(level, rw, name) << (MTT_PERM_BITS(level, rw, name) * idx)
+    MTT_PERM_MASK(level, rw, name) << (MTT_PERM_BITS(level, rw, name) * (idx))
 
 // Entries
 
