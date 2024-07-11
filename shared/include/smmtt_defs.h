@@ -81,9 +81,6 @@ typedef enum {
 #define MTTL1         _ULL(0x00000003FE0000)
 #define MTTL1_OFFS    _ULL(0x0000000001F000)
 
-#define MTTL2_2M_PAGES_SHIFT    (21) /* 2 megabytes */
-#define MTTL2_1G_SHIFT          (30)
-
 // Types
 
 typedef enum {
@@ -103,39 +100,49 @@ typedef enum {
 
 // Permissions
 
-#define MTTL2_2M_PAGES          _UL(0b1)
-#define MTTL2_2M_PAGES_BITS     (1)
+#define MTTL2_2M_PAGES_PERMS        _UL(0b1)
+#define MTTL2_2M_PAGES_PERMS_BITS   (1)
 
 typedef enum {
-    SMMTT_2M_PAGES_DISALLOWED   = 0b0,
-    SMMTT_2M_PAGES_ALLOWED      = 0b1
-} smmtt_2m_pages_t;
+    SMMTT_PERMS_2M_PAGES_DISALLOWED = 0b0,
+    SMMTT_PERMS_2M_PAGES_ALLOWED    = 0b1
+} smmtt_perms_2m_pages_t;
 
-#define MTTL2_RW_2M_PAGES       _UL(0b11)
-#define MTTL2_RW_2M_PAGES_BITS  (2)
-
-typedef enum {
-    SMMTT_2M_PAGES_RW_DISALLOWED = 0b00,
-    SMMTT_2M_PAGES_RW_READ       = 0b01,
-    SMMTT_2M_PAGES_RW_READ_WRITE = 0b11
-} smmtt_2m_pages_rw_t;
-
-#define MTTL1_L1_DIR            _UL(0b11)
-#define MTTL1_L1_DIR_BITS       (2)
+#define MTTL2_RW_2M_PAGES_PERMS         _UL(0b11)
+#define MTTL2_RW_2M_PAGES_PERMS_BITS    (2)
 
 typedef enum {
-    SMMTT_MTT_L1_DIR_DISALLOWED  = 0b00,
-    SMMTT_MTT_L1_DIR_ALLOWED     = 0b01,
-} smmtt_mtt_l1_dir_t;
+    SMMTT_PERMS_2M_PAGES_RW_DISALLOWED  = 0b00,
+    SMMTT_PERMS_2M_PAGES_RW_READ        = 0b01,
+    SMMTT_PERMS_2M_PAGES_RW_READ_WRITE  = 0b11
+} smmtt_perms_2m_pages_rw_t;
 
-#define MTTL1_RW_L1_DIR         _UL(0b1111)
-#define MTTL1_RW_L1_DIR_BITS    (4)
+#define MTTL1_L1_DIR_PERMS             _UL(0b11)
+#define MTTL1_L1_DIR_PERMS_BITS        (2)
 
 typedef enum {
-    SMMTT_MTT_L1_DIR_RW_DISALLOWED = 0b0000,
-    SMMTT_MTT_L1_DIR_RW_READ       = 0b0001,
-    SMMTT_MTT_L1_DIR_RW_READ_WRITE = 0b0011,
-} smmtt_mtt_l1_dir_rw_t;
+    SMMTT_PERMS_MTT_L1_DIR_DISALLOWED   = 0b00,
+    SMMTT_PERMS_MTT_L1_DIR_ALLOWED      = 0b01,
+} smmtt_perms_mtt_l1_dir_t;
+
+#define MTTL1_RW_L1_DIR_PERMS               _UL(0b1111)
+#define MTTL1_RW_L1_DIR_PERMS_BITS          (4)
+
+typedef enum {
+    SMMTT_PERMS_MTT_L1_DIR_RW_DISALLOWED    = 0b0000,
+    SMMTT_PERMS_MTT_L1_DIR_RW_READ          = 0b0001,
+    SMMTT_PERMS_MTT_L1_DIR_RW_READ_WRITE    = 0b0011,
+} smmtt_perms_mtt_l1_dir_rw_t;
+
+// Macros for generating bitfields for permissions at specific indices
+#define MTT_PERM_MASK(level, rw, name) \
+    ((rw) ? (MTTL##level##_RW_##name##_PERMS) : (MTTL##level##_##name##_PERMS))
+
+#define MTT_PERM_BITS(level, rw, name) \
+    ((rw) ? (MTTL##level##_RW_##name##_PERMS_BITS) : (MTTL##level##_##name##_PERMS_BITS))
+
+#define MTT_PERM_FIELD(level, rw, name, idx) \
+    MTT_PERM_MASK(level, rw, name) << (MTT_PERM_BITS(level, rw, name) * idx)
 
 // Entries
 
