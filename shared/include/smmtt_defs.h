@@ -72,19 +72,17 @@ typedef enum {
 #define MTTL3         _ULL(0x7FE00000000000)
 
 #define MTTL2_RW      _ULL(0x001FFFFE000000)
+#define MTTL2_RW_OFFS _ULL(0x00000001E00000)
 #define MTTL1_RW      _ULL(0x00000001FF0000)
-#define MTTL0_RW      _ULL(0x0000000000F000)
+#define MTTL1_RW_OFFS _ULL(0x0000000000F000)
 
 #define MTTL2         _ULL(0x001FFFFC000000)
+#define MTTL2_OFFS    _ULL(0x00000003E00000)
 #define MTTL1         _ULL(0x00000003FE0000)
-#define MTTL0         _ULL(0x0000000001F000)
+#define MTTL1_OFFS    _ULL(0x0000000001F000)
 
 #define MTTL2_2M_PAGES_SHIFT    (21) /* 2 megabytes */
 #define MTTL2_1G_SHIFT          (30)
-#define MTTL2_RW_PAGES          (0b11)
-#define MTTL2_PAGES             (0b1)
-#define MTTL2_RW_PAGES_BITS     (2)
-#define MTTL2_PAGES_BITS        (1)
 
 // Types
 
@@ -105,16 +103,39 @@ typedef enum {
 
 // Permissions
 
-typedef enum {
-    SMMTT_2M_PAGES_TYPE_DISALLOWED    = 0b0,
-    SMMTT_2M_PAGES_TYPE_ALLOWED       = 0b1
-} smmtt_2m_pages_type_t;
+#define MTTL2_2M_PAGES          _UL(0b1)
+#define MTTL2_2M_PAGES_BITS     (1)
 
 typedef enum {
-    SMMTT_2M_PAGES_TYPE_RW_DISALLOWED = 0b00,
-    SMMTT_2M_PAGES_TYPE_RW_READ       = 0b01,
-    SMMTT_2M_PAGES_TYPE_RW_READ_WRITE = 0b11
-} smmtt_2m_pages_type_rw_t;
+    SMMTT_2M_PAGES_DISALLOWED   = 0b0,
+    SMMTT_2M_PAGES_ALLOWED      = 0b1
+} smmtt_2m_pages_t;
+
+#define MTTL2_RW_2M_PAGES       _UL(0b11)
+#define MTTL2_RW_2M_PAGES_BITS  (2)
+
+typedef enum {
+    SMMTT_2M_PAGES_RW_DISALLOWED = 0b00,
+    SMMTT_2M_PAGES_RW_READ       = 0b01,
+    SMMTT_2M_PAGES_RW_READ_WRITE = 0b11
+} smmtt_2m_pages_rw_t;
+
+#define MTTL1_L1_DIR            _UL(0b11)
+#define MTTL1_L1_DIR_BITS       (2)
+
+typedef enum {
+    SMMTT_MTT_L1_DIR_DISALLOWED  = 0b00,
+    SMMTT_MTT_L1_DIR_ALLOWED     = 0b01,
+} smmtt_mtt_l1_dir_t;
+
+#define MTTL1_RW_L1_DIR         _UL(0b1111)
+#define MTTL1_RW_L1_DIR_BITS    (4)
+
+typedef enum {
+    SMMTT_MTT_L1_DIR_RW_DISALLOWED = 0b0000,
+    SMMTT_MTT_L1_DIR_RW_READ       = 0b0001,
+    SMMTT_MTT_L1_DIR_RW_READ_WRITE = 0b0011,
+} smmtt_mtt_l1_dir_rw_t;
 
 // Entries
 

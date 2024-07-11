@@ -5,6 +5,7 @@ define build-opensbi
 $$(eval $$(call project-vars,opensbi,$(1)))
 
 OPENSBI$(1)_MK_FLAGS	:= PLATFORM=generic O=$$(OPENSBI$(1)_BUILDDIR) FW_TEXT_START=0x80000000 \
+                            FW_PAYLOAD_OFFSET=0x8000000 FW_JUMP_OFFSET=0x8000000 \
                             V=$$(VERBOSE) DEBUG=$$(DEBUG) CROSS_COMPILE=$$(CROSS_COMPILE$(1)) \
                             EXTRA_CFLAGS="-I$(SMMTT)/shared/include -DSMMTT_OPENSBI"
 

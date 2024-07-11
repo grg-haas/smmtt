@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="qemu64-debug" type="CLionNativeAppRunConfigurationType" PROGRAM_PARAMS="-machine virt -cpu smmtt -nographic -bios build/dbg/opensbi64/platform/generic/firmware/fw_jump.bin -gdb tcp::9822 -S" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="smmtt" TARGET_NAME="all" CONFIG_NAME="all" version="1" RUN_PATH="$PROJECT_DIR$/build/dbg/qemu/qemu-system-riscv64">
+  <configuration default="false" name="qemu64-debug" type="CLionNativeAppRunConfigurationType" PROGRAM_PARAMS="-machine virt -cpu smmtt -m 4g -nographic -bios build/dbg/opensbi64/platform/generic/firmware/fw_payload.bin -gdb tcp::9822 -S" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="smmtt" TARGET_NAME="all" CONFIG_NAME="all" version="1" RUN_PATH="$PROJECT_DIR$/build/dbg/qemu/qemu-system-riscv64">
     <method v="2">
       <option name="CLION.COMPOUND.BUILD" enabled="true" />
     </method>
