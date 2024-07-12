@@ -4,3 +4,6 @@
 [submodule "opensbi"]
 	path = opensbi
 	url = git@github.com:grg-haas/opensbi.git
+[submodule "kvm-unit-tests"]
+	path = kvm-unit-tests
+	url = git@github.com:grg-haas/kvm-unit-tests.git

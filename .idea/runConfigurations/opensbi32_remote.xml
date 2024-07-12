@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="opensbi32-remote" type="CLion_Remote" version="1" remoteCommand="localhost:9822" symbolFile="$PROJECT_DIR$/build/dbg/opensbi32/platform/generic/firmware/fw_payload.elf" sysroot="">
+  <configuration default="false" name="opensbi32-remote" type="CLion_Remote" version="1" remoteCommand="localhost:9822" symbolFile="$PROJECT_DIR$/build/dbg/opensbi32/platform/generic/firmware/fw_jump.elf" sysroot="">
     <debugger kind="GDB">/bin/riscv32-unknown-linux-gnu-gdb</debugger>
     <method v="2" />
   </configuration>
