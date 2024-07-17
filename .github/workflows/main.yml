@@ -1,0 +1,138 @@
+name: Build and Test
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install dependencies
+      shell: bash
+      run: |
+        sudo apt install ninja-build gcc-riscv64-linux-gnu ccache
+        sudo update-ccache-symlinks
+        sudo mkdir -p /usr/lib/ccache/bin
+        sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv64-linux-gnu-gcc
+        sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv64-linux-gnu-g++
+        sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv64-linux-gnu-c++
+
+    # Checkout the project
+    - name: Checkout SMMTT
+      uses: actions/checkout@v4
+      with:
+        submodules: 'true'
+
+    # Get various keys for various caches
+    - name: Get cache keys
+      id: cache-keys
+      run: |
+        # Grab some timestamps for compiler caches
+        echo "CCKEY=$(date -u +'%Y-%m-%d-%H')-$(uuidgen)" >> "$GITHUB_OUTPUT"
+        echo "YMDH=$(date -u +'%Y-%m-%d-%H')" >> "$GITHUB_OUTPUT"
+        echo "YMD=$(date -u +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+        echo "YM=$(date -u +'%Y-%m')" >> "$GITHUB_OUTPUT"
+        echo "Y=$(date -u +'%Y')" >> "$GITHUB_OUTPUT"
+
+        # Delete any caches which are here already
+        rm -rf ccache*
+
+    - name: Restore ccache
+      id: restore-ccache
+      uses: actions/cache/restore@v4
+      with:
+        path: ccache.tar.xz
+        key: ccache-${{ steps.cache-keys.outputs.CCKEY }}
+        restore-keys: |
+          ccache-${{ steps.cache-keys.outputs.YMDH }}
+          ccache-${{ steps.cache-keys.outputs.YMD }}
+          ccache-${{ steps.cache-keys.outputs.YM }}
+          ccache-${{ steps.cache-keys.outputs.Y }}
+          ccache-
+
+    - name: Decompress caches
+      run: |
+        if [[ -f ccache.tar.xz ]]; then tar -xf ccache.tar.xz ; fi
+
+    - name: Build SMMTT
+      env:
+        CROSS_COMPILE32: riscv64-linux-gnu-
+        CROSS_COMPILE64: riscv64-linux-gnu-
+      run: |
+        PATH="/usr/lib/ccache/bin/:$PATH" CCACHE_DIR="$PWD/ccache" \
+          make -j$(( 2 * $(nproc) ))
+
+    - name: Compress build directory
+      run: |
+        COMPRESS_FILES="build/rel/qemu-system-riscv32"
+        COMPRESS_FILES="$COMPRESS_FILES build/rel/qemu-system-riscv64"
+        COMPRESS_FILES="$COMPRESS_FILES build/rel/linux32/arch/riscv/boot/Image"
+        COMPRESS_FILES="$COMPRESS_FILES build/rel/linux64/arch/riscv/boot/Image"
+        COMPRESS_FILES="$COMPRESS_FILES build/rel/opensbi32/platform/generic/firmware/fw_jump.bin"
+        COMPRESS_FILES="$COMPRESS_FILES build/rel/opensbi64/platform/generic/firmware/fw_jump.bin"
+
+        tar -cf - $COMPRESS_FILES | xz -9 -T0 > build.tar.xz
+
+    - name: Upload build directory
+      uses: actions/upload-artifact@v4
+      with:
+        name: build
+        path: build.tar.xz
+        retention-days: 7
+        compression-level: 0
+
+    - name: Compress cache directories
+      if: success() || failure()
+      run: |
+        # Clear out old bundles
+        rm -f ccache.tar.xz
+
+        # Recompress
+        find ./ccache -type f -print0 | tar --null -cf - -T - | xz -9 -T0 > ccache.tar.xz
+
+    - name: Save ccache
+      uses: actions/cache/save@v4
+      if: success() || failure()
+      with:
+        path: ccache.tar.xz
+        key: ${{ steps.restore-ccache.outputs.cache-primary-key }}
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        bits: [32, 64]
+        isolation: [pmp, smmtt]
+
+    steps:
+    - name: Checkout SMMTT
+      uses: actions/checkout@v4
+      with:
+        submodules: 'true'
+        sparse-checkout: |
+          .
+          mk/
+          scripts/
+
+    - name: Restore build directory
+      uses: actions/download-artifact@v4
+      with:
+        name: build
+        path: .
+
+    - name: Decompress build directory
+      run: cat build.tar.xz | xz -d -T0 | tar -xf -
+
+    - name: Run test
+      run: |
+        make run-linux-${{ matrix.isolation }}${{ matrix.bits }} 2>&1 | \
+          tee run.log
+
+    - name: Check expected
+      run: |
+        [[ ! -z $(cat run.log | grep "Unable to mount root fs on unknown-block(0,0)") ]]

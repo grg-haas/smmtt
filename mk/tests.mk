@@ -4,14 +4,6 @@ define build-tests
 
 $$(eval $$(call project-vars,tests,$(1)))
 
-TESTS$(1)_RUN_ENV = \
-	FIRMWARE_OVERRIDE=$$(OPENSBI$(1)_BUILDDIR)/platform/generic/firmware/fw_jump.bin \
-	QEMU=$$(QEMU_BUILDDIR)/qemu-system-riscv$(1)
-
-.PHONY: run-tests$(1)
-run-tests$(1): tests$(1) opensbi$(1) qemu
-	( cd $$(TESTS$(1)_BUILDDIR) ; $$(TESTS$(1)_RUN_ENV) ./riscv-run ./riscv/sbi.flat )
-
 .PHONY: tests$(1)
 tests$(1): $$(TESTS$(1)_BUILDDIR)/Makefile
 	$$(MAKE) -C $$(TESTS$(1)_BUILDDIR)
