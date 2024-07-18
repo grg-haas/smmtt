@@ -74,7 +74,15 @@ jobs:
         CROSS_COMPILE64: riscv64-linux-gnu-
       run: |
         PATH="/usr/lib/ccache/bin/:$PATH" CCACHE_DIR="$PWD/ccache" \
-          make -j$(( 2 * $(nproc) ))
+          make -j$(( 2 * $(nproc) )) 2>&1 | tee build.log | \
+          grep -o 'make\(\[[0-9]*\]\)\?: \*\*\* \[.*\] Error [0-9]*'
+
+    - name: Upload build directory
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: build.log
+        path: build.log
 
     - name: Compress build directory
       run: |
@@ -84,7 +92,6 @@ jobs:
         COMPRESS_FILES="$COMPRESS_FILES build/rel/linux64/arch/riscv/boot/Image"
         COMPRESS_FILES="$COMPRESS_FILES build/rel/opensbi32/platform/generic/firmware/fw_jump.bin"
         COMPRESS_FILES="$COMPRESS_FILES build/rel/opensbi64/platform/generic/firmware/fw_jump.bin"
-
         tar -cf - $COMPRESS_FILES | xz -9 -T0 > build.tar.xz
 
     - name: Upload build directory
@@ -96,6 +103,7 @@ jobs:
         compression-level: 0
 
     - name: Print final cache statistics
+      if: success() || failure()
       run: |
         ccache -d "$PWD/ccache" -s
 
@@ -122,17 +130,13 @@ jobs:
       fail-fast: false
       matrix:
         bits: [32, 64]
-        isolation: [pmp, smmtt]
+        isolation: [max, smmtt]
 
     steps:
     - name: Checkout SMMTT
       uses: actions/checkout@v4
       with:
-        submodules: 'true'
-        sparse-checkout: |
-          .
-          mk/
-          scripts/
+        submodules: 'false'
 
     - name: Restore build directory
       uses: actions/download-artifact@v4
@@ -145,7 +149,7 @@ jobs:
 
     - name: Run test
       run: |
-        make run-linux-${{ matrix.isolation }}${{ matrix.bits }} 2>&1 | \
+        make run-${{ matrix.isolation }}${{ matrix.bits }} 2>&1 | \
           tee run.log
 
     - name: Check expected
