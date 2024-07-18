@@ -64,6 +64,10 @@ jobs:
       run: |
         if [[ -f ccache.tar.xz ]]; then tar -xf ccache.tar.xz ; fi
 
+    - name: Print initial cache statistics
+      run: |
+        ccache -d "$PWD/ccache" -s
+
     - name: Build SMMTT
       env:
         CROSS_COMPILE32: riscv64-linux-gnu-
@@ -90,6 +94,10 @@ jobs:
         path: build.tar.xz
         retention-days: 7
         compression-level: 0
+
+    - name: Print final cache statistics
+      run: |
+        ccache -d "$PWD/ccache" -s
 
     - name: Compress cache directories
       if: success() || failure()
