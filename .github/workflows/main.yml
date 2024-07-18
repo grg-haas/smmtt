@@ -7,15 +7,13 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-22.04
     steps:
     - name: Install dependencies
       shell: bash
       run: |
         # Apt dependencies
         sudo apt install ninja-build ccache
-        sudo update-ccache-symlinks
         sudo mkdir -p /usr/lib/ccache/bin
 
         # Download riscv compilers
@@ -23,21 +21,27 @@ jobs:
           -H "Accept: application/vnd.github+json" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
           https://api.github.com/repos/riscv-collab/riscv-gnu-toolchain/releases | \
-            jq '.[0][] | select(. | type == "array") |
+            jq -r '.[0][] | select(. | type == "array") |
               map(select(.name | match("glibc-ubuntu-22.04-gcc"))) |
               map(.browser_download_url)[]')
 
-        echo "$TOOLCHAIN_URLS"
-        exit 1
-
         for url in $TOOLCHAIN_URLS ; do
           wget "$url"
-        fi
+        done
+
+        for f in *.tar.gz ; do
+          tar xf "$f"
+        done
+
+        sudo mv riscv /opt
 
         # Link compilers -- riscv
-        sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv64-linux-gnu-gcc
-        sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv64-linux-gnu-g++
-        sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv64-linux-gnu-c++
+        sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv32-unknown-linux-gnu-gcc
+        sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv32-unknown-linux-gnu-g++
+        sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv32-unknown-linux-gnu-c++
+        sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv64-unknown-linux-gnu-gcc
+        sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv64-unknown-linux-gnu-g++
+        sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv64-unknown-linux-gnu-c++
 
         # Native
         sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/gcc
@@ -86,13 +90,11 @@ jobs:
         ccache -d "$PWD/ccache" -s
 
     - name: Build SMMTT
-      env:
-        CROSS_COMPILE32: riscv64-linux-gnu-
-        CROSS_COMPILE64: riscv64-linux-gnu-
       run: |
-          export PATH="/usr/lib/ccache/bin/:$PATH"
-          export CCACHE_DIR="$PWD/ccache"
           set -o pipefail
+          export PATH="/usr/lib/ccache/bin/:/opt/riscv/bin:$PATH"
+          export CCACHE_DIR="$PWD/ccache"
+
           make -j$(( 2 * $(nproc) )) 2>&1 | tee build.log | \
           grep -o 'make\(\[[0-9]*\]\)\?: \*\*\* \[.*\] Error [0-9]*'
 
