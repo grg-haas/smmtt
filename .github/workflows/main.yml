@@ -74,8 +74,8 @@ jobs:
 
     - name: Compress build directory
       run: |
-        COMPRESS_FILES="build/rel/qemu-system-riscv32"
-        COMPRESS_FILES="$COMPRESS_FILES build/rel/qemu-system-riscv64"
+        COMPRESS_FILES="build/rel/qemu/qemu-system-riscv32"
+        COMPRESS_FILES="$COMPRESS_FILES build/rel/qemu/qemu-system-riscv64"
         COMPRESS_FILES="$COMPRESS_FILES build/rel/linux32/arch/riscv/boot/Image"
         COMPRESS_FILES="$COMPRESS_FILES build/rel/linux64/arch/riscv/boot/Image"
         COMPRESS_FILES="$COMPRESS_FILES build/rel/opensbi32/platform/generic/firmware/fw_jump.bin"
