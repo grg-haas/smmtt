@@ -16,9 +16,16 @@ jobs:
         sudo apt install ninja-build gcc-riscv64-linux-gnu ccache
         sudo update-ccache-symlinks
         sudo mkdir -p /usr/lib/ccache/bin
+
+        # Link compilers -- riscv
         sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv64-linux-gnu-gcc
         sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv64-linux-gnu-g++
         sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv64-linux-gnu-c++
+
+        # Native
+        sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/gcc
+        sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/g++
+        sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/c++
 
     # Checkout the project
     - name: Checkout SMMTT
