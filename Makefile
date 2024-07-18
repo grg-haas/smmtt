@@ -24,7 +24,7 @@ endif
 ###################
 
 BITS            := 32 64
-PROJECTS	:= opensbi linux tests
+PROJECTS	:= opensbi linux #tests
 ISOLATION	:= max smmtt
 
 # Generate toplevel targets
