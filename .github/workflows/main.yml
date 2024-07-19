@@ -26,7 +26,7 @@ jobs:
               map(.browser_download_url)[]')
 
         for url in $TOOLCHAIN_URLS ; do
-          wget "$url"
+          wget -q "$url"
         done
 
         for f in *.tar.gz ; do
