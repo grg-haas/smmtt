@@ -13,7 +13,7 @@ define run-targets
 #	( cd $$(TESTS$(1)_BUILDDIR) ; $$(TESTS$(1)_RUN_ENV) ./riscv-run ./riscv/sbi.flat )
 
 QEMU$(1)$(2)_RUN_FLAGS = \
-	-nodefaults -nographic -serial mon:stdio -machine virt -accel tcg \
+	-nodefaults -nographic -serial mon:stdio -machine virt,rpmi=true -accel tcg \
 	-bios $$(OPENSBI$(1)_BUILDDIR)/platform/generic/firmware/fw_jump.bin \
 	-kernel $$(LINUX$(1)_BUILDDIR)/arch/riscv/boot/Image \
 	-no-reboot -append "earlycon console=ttyS0 panic=-1" -cpu $(2)
@@ -39,5 +39,9 @@ qemudbg-$(2)$(1):
 .PHONY: alldbg-$(2)$(1)
 alldbg-$(2)$(1):
 	gdb --args $$(QEMU_BUILDDIR)/qemu-system-riscv$(1) $$(QEMU$(1)$(2)_RUN_FLAGS) -gdb tcp::9822 -S
+
+.PHONY: dumpdtb-$(2)$(1)
+dumpdtb-$(2)$(1):
+	$$(QEMU_BUILDDIR)/qemu-system-riscv$(1) $$(QEMU$(1)$(2)_RUN_FLAGS) -machine dumpdtb=qemu-$(2)$(1).dtb
 
 endef
