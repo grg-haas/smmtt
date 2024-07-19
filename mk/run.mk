@@ -19,27 +19,25 @@ QEMU$(1)$(2)_RUN_FLAGS = \
 	-no-reboot -append "earlycon console=ttyS0 panic=-1" -cpu $(2)
 
 ifeq ($(1),32)
-	QEMU$(1)_RUN_FLAGS += -m 1536M
+	QEMU$(1)$(2)_RUN_FLAGS += -m 1536M
 else ifeq ($(1),64)
-	QEMU$(1)_RUN_FLAGS += -m 4G
+	QEMU$(1)$(2)_RUN_FLAGS += -m 4G
 endif
 
 .PHONY: run-$(2)$(1)
 run-$(2)$(1):
-	$$(QEMU_BUILDDIR)/qemu-system-riscv$(1) $$(QEMU$(1)$(2)_RUN_FLAGS) -cpu $(2)
+	$$(QEMU_BUILDDIR)/qemu-system-riscv$(1) $$(QEMU$(1)$(2)_RUN_FLAGS)
 
 .PHONY: debug-$(2)$(1)
 debug-$(2)$(1):
-	$$(QEMU_BUILDDIR)/qemu-system-riscv$(1) $$(QEMU$(1)$(2)_RUN_FLAGS) -cpu $(2) \
-		-gdb tcp::9822 -S
+	$$(QEMU_BUILDDIR)/qemu-system-riscv$(1) $$(QEMU$(1)$(2)_RUN_FLAGS) -gdb tcp::9822 -S
 
 .PHONY: qemudbg-$(2)$(1)
 qemudbg-$(2)$(1):
-	gdb --args $$(QEMU_BUILDDIR)/qemu-system-riscv$(1) $$(QEMU$(1)$(2)_RUN_FLAGS) -cpu $(2)
+	gdb --args $$(QEMU_BUILDDIR)/qemu-system-riscv$(1) $$(QEMU$(1)$(2)_RUN_FLAGS)
 
 .PHONY: alldbg-$(2)$(1)
 alldbg-$(2)$(1):
-	gdb --args $$(QEMU_BUILDDIR)/qemu-system-riscv$(1) $$(QEMU$(1)$(2)_RUN_FLAGS) -cpu $(2) \
-		-gdb tcp::9822 -S
+	gdb --args $$(QEMU_BUILDDIR)/qemu-system-riscv$(1) $$(QEMU$(1)$(2)_RUN_FLAGS) -gdb tcp::9822 -S
 
 endef
