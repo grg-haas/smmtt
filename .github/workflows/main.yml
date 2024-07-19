@@ -107,6 +107,8 @@ jobs:
       run: |
         COMPRESS_FILES="build/rel/qemu/qemu-system-riscv32"
         COMPRESS_FILES="$COMPRESS_FILES build/rel/qemu/qemu-system-riscv64"
+        COMPRESS_FILES="$COMPRESS_FILES build/rel/tests32/riscv/sbi.flat"
+        COMPRESS_FILES="$COMPRESS_FILES build/rel/tests64/riscv/sbi.flat"
         COMPRESS_FILES="$COMPRESS_FILES build/rel/linux32/arch/riscv/boot/Image"
         COMPRESS_FILES="$COMPRESS_FILES build/rel/linux64/arch/riscv/boot/Image"
         COMPRESS_FILES="$COMPRESS_FILES build/rel/opensbi32/platform/generic/firmware/fw_jump.bin"
@@ -150,6 +152,7 @@ jobs:
       matrix:
         bits: [32, 64]
         isolation: [max, smmtt]
+        test: [linux, tests]
 
     steps:
     - name: Checkout SMMTT
@@ -168,8 +171,14 @@ jobs:
 
     - name: Run test
       run: |
-        make run-${{ matrix.isolation }}${{ matrix.bits }} 2>&1 | tee run.log
+        make run-${{ matrix.test }}-${{ matrix.isolation }}${{ matrix.bits }} 2>&1 | tee run.log
 
     - name: Check expected
+      if: ${{ matrix.test == 'linux' }}
       run: |
         [[ ! -z $(cat run.log | grep "Unable to mount root fs on unknown-block(0,0)") ]]
+
+    - name: Check expected
+      if: ${{ matrix.test == 'tests' }}
+      run: |
+        [[ ! -z $(cat run.log | grep "EXIT: STATUS=1") ]]

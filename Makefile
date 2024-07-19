@@ -22,16 +22,17 @@ endif
 ###################
 ## Build recipes ##
 ###################
+PROJECTS        := linux tests opensbi
 
 BITS            := 32 64
-PROJECTS	:= opensbi linux #tests
 ISOLATION	:= max smmtt
+TESTS_TO_RUN	:= linux tests
 
 # Generate toplevel targets
-TARGETS := $(foreach proj,$(PROJECTS),	\
+TARGETS	:= qemu
+TARGETS += $(foreach proj,$(PROJECTS),	\
 		$(foreach bits,$(BITS),	\
 			$(proj)$(bits)))
-TARGETS += qemu
 all: $(TARGETS)
 
 # Include helper files
@@ -48,9 +49,10 @@ $(foreach proj,$(PROJECTS),	\
 		$(eval $(call build-$(proj),$(bits)))))
 
 # Generate tests
-$(foreach mode,$(ISOLATION),	\
-	$(foreach bits,$(BITS),	\
-		$(eval $(call run-targets,$(bits),$(mode)))))
+$(foreach mode,$(ISOLATION),			\
+	$(foreach bits,$(BITS),			\
+		$(foreach test,$(TESTS_TO_RUN), \
+			$(eval $(call run-targets,$(bits),$(mode),$(test))))))
 
 # Cleaning
 .PHONY: clean
