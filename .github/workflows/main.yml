@@ -12,11 +12,13 @@ jobs:
     - name: Install dependencies
       shell: bash
       run: |
-        # Apt dependencies
+        # apt dependencies
         sudo apt install ninja-build ccache
         sudo mkdir -p /usr/lib/ccache/bin
 
-        # Download riscv compilers
+        # Download the most recent release of the riscv compilers for ubuntu 22.04.
+        # We'll do this by querying the Github API for the most recent releases,
+        # filter by artifacts that are named like we expect, and wget/extract them.
         TOOLCHAIN_URLS=$(curl -L \
           -H "Accept: application/vnd.github+json" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
@@ -25,17 +27,11 @@ jobs:
               map(select(.name | match("glibc-ubuntu-22.04-gcc"))) |
               map(.browser_download_url)[]')
 
-        for url in $TOOLCHAIN_URLS ; do
-          wget -q "$url"
-        done
-
-        for f in *.tar.gz ; do
-          tar xf "$f"
-        done
-
+        for url in $TOOLCHAIN_URLS ; do wget -q "$url" ; done
+        for f in *.tar.gz ; do tar xf "$f" ; done
         sudo mv riscv /opt
 
-        # Link compilers -- riscv
+        # Link RISC-V compilers to ccache
         sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv32-unknown-linux-gnu-gcc
         sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv32-unknown-linux-gnu-g++
         sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv32-unknown-linux-gnu-c++
@@ -43,7 +39,7 @@ jobs:
         sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv64-unknown-linux-gnu-g++
         sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/riscv64-unknown-linux-gnu-c++
 
-        # Native
+        # Link native compilers to ccache
         sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/gcc
         sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/g++
         sudo ln -s /usr/bin/ccache /usr/lib/ccache/bin/c++
@@ -91,12 +87,14 @@ jobs:
 
     - name: Build SMMTT
       run: |
+          # Configure shell and environment
           set -o pipefail
           export PATH="/usr/lib/ccache/bin/:/opt/riscv/bin:$PATH"
           export CCACHE_DIR="$PWD/ccache"
 
+          # Run build and grep for errors
           make -j$(( 2 * $(nproc) )) 2>&1 | tee build.log | \
-          grep -o 'make\(\[[0-9]*\]\)\?: \*\*\* \[.*\] Error [0-9]*'
+          { grep -o 'make\(\[[0-9]*\]\)\?: \*\*\* \[.*\] Error [0-9]*' || test $? = 1; }
 
     - name: Upload build log
       uses: actions/upload-artifact@v4
@@ -170,8 +168,7 @@ jobs:
 
     - name: Run test
       run: |
-        make run-${{ matrix.isolation }}${{ matrix.bits }} 2>&1 | \
-          tee run.log
+        make run-${{ matrix.isolation }}${{ matrix.bits }} 2>&1 | tee run.log
 
     - name: Check expected
       run: |
