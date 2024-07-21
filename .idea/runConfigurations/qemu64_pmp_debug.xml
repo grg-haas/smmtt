@@ -1,7 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="qemu64-pmp-debug" type="CLionNativeAppRunConfigurationType" PROGRAM_PARAMS="-nodefaults -nographic -serial mon:stdio -machine virt,rpmi=true -accel tcg -bios build/dbg/opensbi64/platform/generic/firmware/fw_jump.bin -cpu max -m 4g -kernel build/dbg/linux64/arch/riscv/boot/Image -append &quot;earlycon console=ttyS0&quot; -gdb tcp::9822 -S" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="smmtt" TARGET_NAME="all" CONFIG_NAME="all" version="1" RUN_PATH="$PROJECT_DIR$/build/dbg/qemu/qemu-system-riscv64">
-    <method v="2">
-      <option name="CLION.COMPOUND.BUILD" enabled="true" />
-    </method>
-  </configuration>
-</component>

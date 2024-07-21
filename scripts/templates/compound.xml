@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name=SMMTT_NAME type="CompoundRunConfigurationType">
+    <toRun name=SMMTT_QEMU type="CLionNativeAppRunConfigurationType" />
+    <toRun name=SMMTT_REMOTE type="CLion_Remote" />
+    <method v="2" />
+  </configuration>
+</component>

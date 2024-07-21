@@ -1,7 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="opensbi64-smmtt-debug" type="CompoundRunConfigurationType">
-    <toRun name="qemu64-smmtt-debug" type="CLionNativeAppRunConfigurationType" />
-    <toRun name="opensbi64-remote" type="CLion_Remote" />
-    <method v="2" />
-  </configuration>
-</component>

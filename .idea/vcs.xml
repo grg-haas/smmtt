@@ -2,6 +2,8 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/build/dbg/linux32/source" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/build/dbg/linux64/source" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/kvm-unit-tests" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/linux" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/opensbi" vcs="Git" />

@@ -13,6 +13,8 @@ export DEBUG			?= 0
 
 # Directories
 export SMMTT			?= $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
+export IDEACFG			?= $(SMMTT)/.idea/runConfigurations
+
 ifeq ($(CCACHE_DIR),)
 export CCACHE_DIR		:= $(SMMTT)/.ccache
 else
@@ -29,7 +31,7 @@ ISOLATION	:= max smmtt
 TESTS_TO_RUN	:= linux tests
 
 # Generate toplevel targets
-TARGETS	:= qemu
+TARGETS	:= ideacfgs qemu
 TARGETS += $(foreach proj,$(PROJECTS),	\
 		$(foreach bits,$(BITS),	\
 			$(proj)$(bits)))
@@ -57,7 +59,7 @@ $(foreach mode,$(ISOLATION),			\
 # Cleaning
 .PHONY: clean
 clean:
-	rm -rf $(SMMTT)/build
+	rm -rf $(SMMTT)/build $(SMMTT).idea/runConfigurations
 
 .PHONY: clean-opensbi
 clean-opensbi: clean-opensbi32 clean-opensbi64
