@@ -10,3 +10,5 @@
 [submodule "linux"]
 	path = linux
 	url = https://github.com/torvalds/linux
+	shallow = true
+	depth = 1

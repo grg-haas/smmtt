@@ -3,6 +3,7 @@ import os
 # Constants
 KERNEL32_LOAD_ADDR = 0x80400000
 KERNEL64_LOAD_ADDR = 0x80200000
+KERNEL_SECONDARY_LOAD_ADDR = 0xBC000000
 
 # Extract injected variables
 SMMTT_BITS = os.getenv('SMMTT_BITS')
@@ -63,9 +64,6 @@ class DiscoveryBreakpoint(gdb.Breakpoint):
 		# Read the first 16 kilobytes
 		inf = gdb.selected_inferior()
 		mem = [int.from_bytes(a, 'big') for a in inf.read_memory(addr, 16 * 1024)]
-#		print('read: ', [a for a in mem])
-#		print('linux: ', [a for a in linuxmem])
-#		print('tests: ', [a for a in testmem])
 
 		if all([a == b for a, b in zip(mem, linuxmem)]):
 			self.SMMTT_TEST = 'linux'
@@ -109,11 +107,12 @@ def add_symbol_files(SMMTT_BITS, SMMTT_ISOL, SMMTT_TEST):
 	if SMMTT_TEST == 'linux':
 		gdb.execute(f'add-symbol-file {LINUX_BUILDDIR}/vmlinux')
 	elif SMMTT_TEST == 'tests':
+		gdb.execute(f'add-symbol-file -o {hex(KERNEL_SECONDARY_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/sbi.elf')
+
 		if SMMTT_BITS == '32':
 			gdb.execute(f'add-symbol-file -o {hex(KERNEL32_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/sbi.elf')
 		elif SMMTT_BITS == '64':
 			gdb.execute(f'add-symbol-file -o {hex(KERNEL64_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/sbi.elf')
-
 
 if any([s is None for s in [SMMTT_BITS, SMMTT_ISOL, SMMTT_TEST]]):
 	# We need to defer feature discovery until we have a stack frame.

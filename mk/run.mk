@@ -71,8 +71,23 @@ define run-targets
 QEMU$(1)$(2)$(3)_RUN_FLAGS = \
 	-nodefaults -nographic -serial mon:stdio -machine virt,rpmi=true -accel tcg \
 	-bios $$(OPENSBI$(1)_BUILDDIR)/platform/generic/firmware/fw_jump.bin \
-	-kernel $$(LINUX$(1)_BUILDDIR)/arch/riscv/boot/Image \
-	-no-reboot -append "earlycon console=ttyS0 panic=-1" -cpu $(2)
+	-no-reboot -cpu $(2) -smp 2
+
+ifeq ($(3),linux)
+	QEMU$(1)$(2)$(3)_RUN_FILE = $$(LINUX$(1)_BUILDDIR)/arch/riscv/boot/Image
+	QEMU$(1)$(2)$(3)_RUN_FLAGS += -append "earlycon console=ttyS0 panic=-1"
+else ifeq ($(3),tests)
+	QEMU$(1)$(2)$(3)_RUN_FILE = $$(TESTS$(1)_BUILDDIR)/riscv/sbi.flat
+endif
+
+# Add secondary domain
+QEMU$(1)$(2)$(3)_RUN_FLAGS += \
+	-device loader,file=$$(QEMU$(1)$(2)$(3)_RUN_FILE),addr=0xBC000000,force-raw=on \
+	-device opensbi-memregion,id=mem,base=0xBC000000,size=0x4000000,mmio=false \
+	-device opensbi-memregion,id=uart,base=0x10000000,size=0x1000,mmio=true,device0="/soc/serial@10000000" \
+	-device opensbi-domain,id=domain,possible-harts=0x3,boot-hart=0x0,next-addr=0xBC000000,next-arg1=0xBFE00000,next-mode=1,region0=mem,perms0=0x3f,region1=uart,perms1=0x3f
+
+QEMU$(1)$(2)$(3)_RUN_FLAGS += -kernel $$(QEMU$(1)$(2)$(3)_RUN_FILE)
 
 ifeq ($(1),32)
 	QEMU$(1)$(2)$(3)_RUN_FLAGS += -m 1536M
@@ -80,11 +95,6 @@ else ifeq ($(1),64)
 	QEMU$(1)$(2)$(3)_RUN_FLAGS += -m 4G
 endif
 
-ifeq ($(3),linux)
-	QEMU$(1)$(2)$(3)_RUN_FLAGS += -kernel $$(LINUX$(1)_BUILDDIR)/arch/riscv/boot/Image
-else ifeq ($(3),tests)
-	QEMU$(1)$(2)$(3)_RUN_FLAGS += -kernel $$(TESTS$(1)_BUILDDIR)/riscv/sbi.flat
-endif
 
 # Strip the flags for use in IDEA cfg files
 QEMU$(1)$(2)$(3)_RUN_FLAGS_STRIPPED = $$(shell echo '$$(QEMU$(1)$(2)$(3)_RUN_FLAGS)' | sed 's/"/\&quot;/g')
