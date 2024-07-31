@@ -1,2 +1,4 @@
 build/
 .ccache/
+*.dtb
+.idea/runConfigurations

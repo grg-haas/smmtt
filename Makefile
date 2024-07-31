@@ -13,6 +13,8 @@ export DEBUG			?= 0
 
 # Directories
 export SMMTT			?= $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
+export IDEACFG			?= $(SMMTT)/.idea/runConfigurations
+
 ifeq ($(CCACHE_DIR),)
 export CCACHE_DIR		:= $(SMMTT)/.ccache
 else
@@ -22,16 +24,17 @@ endif
 ###################
 ## Build recipes ##
 ###################
+PROJECTS        := linux tests opensbi
 
 BITS            := 32 64
-PROJECTS	:= opensbi linux #tests
 ISOLATION	:= max smmtt
+TESTS_TO_RUN	:= linux tests
 
 # Generate toplevel targets
-TARGETS := $(foreach proj,$(PROJECTS),	\
+TARGETS	:= ideacfgs qemu
+TARGETS += $(foreach proj,$(PROJECTS),	\
 		$(foreach bits,$(BITS),	\
 			$(proj)$(bits)))
-TARGETS += qemu
 all: $(TARGETS)
 
 # Include helper files
@@ -48,14 +51,15 @@ $(foreach proj,$(PROJECTS),	\
 		$(eval $(call build-$(proj),$(bits)))))
 
 # Generate tests
-$(foreach mode,$(ISOLATION),	\
-	$(foreach bits,$(BITS),	\
-		$(eval $(call run-targets,$(bits),$(mode)))))
+$(foreach mode,$(ISOLATION),			\
+	$(foreach bits,$(BITS),			\
+		$(foreach test,$(TESTS_TO_RUN), \
+			$(eval $(call run-targets,$(bits),$(mode),$(test))))))
 
 # Cleaning
 .PHONY: clean
 clean:
-	rm -rf $(SMMTT)/build
+	rm -rf $(SMMTT)/build $(SMMTT).idea/runConfigurations
 
 .PHONY: clean-opensbi
 clean-opensbi: clean-opensbi32 clean-opensbi64
