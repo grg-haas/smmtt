@@ -85,7 +85,7 @@ QEMU$(1)$(2)$(3)_RUN_FLAGS += \
 	-device loader,file=$$(QEMU$(1)$(2)$(3)_RUN_FILE),addr=0xBC000000,force-raw=on \
 	-device opensbi-memregion,id=mem,base=0xBC000000,size=0x4000000,mmio=false \
 	-device opensbi-memregion,id=uart,base=0x10000000,size=0x1000,mmio=true,device0="/soc/serial@10000000" \
-	-device opensbi-domain,id=domain,possible-harts=0x3,boot-hart=0x0,next-addr=0xBC000000,next-arg1=0xBFE00000,next-mode=1,region0=mem,perms0=0x3f,region1=uart,perms1=0x3f
+	-device opensbi-domain,id=domain,possible-harts=0-1,boot-hart=0x0,next-addr=0xBC000000,next-arg1=0xBFE00000,next-mode=1,region0=mem,perms0=0x3f,region1=uart,perms1=0x3f
 
 QEMU$(1)$(2)$(3)_RUN_FLAGS += -kernel $$(QEMU$(1)$(2)$(3)_RUN_FILE)
 
