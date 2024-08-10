@@ -107,12 +107,13 @@ jobs:
       run: |
         COMPRESS_FILES="build/rel/qemu/qemu-system-riscv32"
         COMPRESS_FILES="$COMPRESS_FILES build/rel/qemu/qemu-system-riscv64"
-        COMPRESS_FILES="$COMPRESS_FILES build/rel/tests32/riscv/sbi.flat"
-        COMPRESS_FILES="$COMPRESS_FILES build/rel/tests64/riscv/sbi.flat"
-        COMPRESS_FILES="$COMPRESS_FILES build/rel/linux32/arch/riscv/boot/Image"
-        COMPRESS_FILES="$COMPRESS_FILES build/rel/linux64/arch/riscv/boot/Image"
-        COMPRESS_FILES="$COMPRESS_FILES build/rel/opensbi32/platform/generic/firmware/fw_jump.bin"
-        COMPRESS_FILES="$COMPRESS_FILES build/rel/opensbi64/platform/generic/firmware/fw_jump.bin"
+        for bits in 32 64 ; do
+          for test in sbi smmtt; do
+            COMPRESS_FILES="$COMPRESS_FILES build/rel/tests$bits/riscv/$test.flat"
+          done
+          COMPRESS_FILES="$COMPRESS_FILES build/rel/linux$bits/arch/riscv/boot/Image"
+          COMPRESS_FILES="$COMPRESS_FILES build/rel/opensbi$bits/platform/generic/firmware/fw_jump.bin"
+        done
         tar -cf - $COMPRESS_FILES | xz -9 -T0 > build.tar.xz
 
     - name: Upload build directory
