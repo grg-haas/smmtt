@@ -5,17 +5,13 @@ KERNEL32_LOAD_ADDR = 0x80400000
 KERNEL64_LOAD_ADDR = 0x80200000
 KERNEL_SECONDARY_LOAD_ADDR = 0xBC000000
 
-# Extract injected variables
-SMMTT_BITS = os.getenv('SMMTT_BITS')
-SMMTT_ISOL = os.getenv('SMMTT_ISOL')
-SMMTT_TEST = os.getenv('SMMTT_TEST')
 
 class DiscoveryBreakpoint(gdb.Breakpoint):
-	def __init__(self, SMMTT_BITS, SMMTT_ISOL, SMMTT_TEST):
+	def __init__(self):
 		super().__init__('_fw_start', internal=True)
-		self.SMMTT_BITS = SMMTT_BITS
-		self.SMMTT_ISOL = SMMTT_ISOL
-		self.SMMTT_TEST = SMMTT_TEST
+		self.SMMTT_BITS = None
+		self.SMMTT_ISOL = None
+		self.SMMTT_TEST = None
 		self.hit = False
 
 	def determine_name(self, arch):
@@ -42,6 +38,7 @@ class DiscoveryBreakpoint(gdb.Breakpoint):
 		addr = None
 		linuxmem = None
 		testmem = None
+		unittestmem = None
 
 		if self.SMMTT_BITS == '32':
 			addr = KERNEL32_LOAD_ADDR
@@ -51,15 +48,19 @@ class DiscoveryBreakpoint(gdb.Breakpoint):
 			with open('build/dbg/tests32/riscv/sbi.flat', 'rb') as f:
 				testmem = f.read(16 * 1024)
 
+			with open('build/dbg/tests32/riscv/smmtt.flat', 'rb') as f:
+				unittestmem = f.read(16 * 1024)
+
 		elif self.SMMTT_BITS == '64':
 			addr = KERNEL64_LOAD_ADDR
-
 			with open('build/dbg/linux64/arch/riscv/boot/Image', 'rb') as f:
 				linuxmem = f.read(16 * 1024)
 
 			with open('build/dbg/tests64/riscv/sbi.flat', 'rb') as f:
 				testmem = f.read(16 * 1024)
 
+			with open('build/dbg/tests64/riscv/smmtt.flat', 'rb') as f:
+				unittestmem = f.read(16 * 1024)
 
 		# Read the first 16 kilobytes
 		inf = gdb.selected_inferior()
@@ -69,6 +70,8 @@ class DiscoveryBreakpoint(gdb.Breakpoint):
 			self.SMMTT_TEST = 'linux'
 		elif all([a == b for a, b in zip(mem, testmem)]):
 			self.SMMTT_TEST = 'tests'
+		elif all([a == b for a, b in zip(mem, unittestmem)]):
+			self.SMMTT_TEST = 'unittests'
 		else:
 			print(f'Unrecognized kernel memory')
 			exit(-1)
@@ -106,6 +109,7 @@ def add_symbol_files(SMMTT_BITS, SMMTT_ISOL, SMMTT_TEST):
 	# Add test-specific files
 	if SMMTT_TEST == 'linux':
 		gdb.execute(f'add-symbol-file {LINUX_BUILDDIR}/vmlinux')
+
 	elif SMMTT_TEST == 'tests':
 		gdb.execute(f'add-symbol-file -o {hex(KERNEL_SECONDARY_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/sbi.elf')
 
@@ -114,23 +118,29 @@ def add_symbol_files(SMMTT_BITS, SMMTT_ISOL, SMMTT_TEST):
 		elif SMMTT_BITS == '64':
 			gdb.execute(f'add-symbol-file -o {hex(KERNEL64_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/sbi.elf')
 
-if any([s is None for s in [SMMTT_BITS, SMMTT_ISOL, SMMTT_TEST]]):
-	# We need to defer feature discovery until we have a stack frame.
-	# Otherwise, GDB does not expose the information we need. In this case,
-	# we assume something external (typically CLion) has loaded the initial
-	# OpenSBI symbol file for us so we can set this breakpoint.
-	db = DiscoveryBreakpoint(SMMTT_BITS, SMMTT_ISOL, SMMTT_TEST)
-	def stop_handler(event):
-		if db.hit:
-			SMMTT_BITS = db.SMMTT_BITS
-			SMMTT_ISOL = db.SMMTT_ISOL
-			SMMTT_TEST = db.SMMTT_TEST
-			db.delete()
-			gdb.events.stop.disconnect(stop_handler)
-			add_symbol_files(SMMTT_BITS, SMMTT_ISOL, SMMTT_TEST)
+	elif SMMTT_TEST == 'unittests':
+		gdb.execute(f'add-symbol-file -o {hex(KERNEL_SECONDARY_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/smmtt.elf')
 
-	# Connect the stop handler
-	gdb.events.stop.connect(stop_handler)
+		if SMMTT_BITS == '32':
+			gdb.execute(f'add-symbol-file -o {hex(KERNEL32_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/smmtt.elf')
+		elif SMMTT_BITS == '64':
+			gdb.execute(f'add-symbol-file -o {hex(KERNEL64_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/smmtt.elf')
 
-else:
-	add_symbol_files(SMMTT_BITS, SMMTT_ISOL, SMMTT_TEST)
+# We need to defer feature discovery until we have a stack frame.
+# Otherwise, GDB does not expose the information we need. In this case,
+# we assume something external (typically CLion) has loaded the initial
+# OpenSBI symbol file for us so we can set this breakpoint. We'll also
+# make sure to only break on the coldbooting thread.
+
+db = DiscoveryBreakpoint()
+db.thread = 1
+db.enabled = True
+
+def stop_handler(event):
+	if db.hit:
+		add_symbol_files(db.SMMTT_BITS, db.SMMTT_ISOL, db.SMMTT_TEST)
+		db.delete()
+		gdb.events.stop.disconnect(stop_handler)
+
+# Connect the stop handler
+gdb.events.stop.connect(stop_handler)

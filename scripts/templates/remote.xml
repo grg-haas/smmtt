@@ -2,10 +2,5 @@
   <configuration default="false" name=SMMTT_NAME type="CLion_Remote" version="1" remoteCommand="localhost:9822" symbolFile=SMMTT_OPENSBI sysroot="">
     <debugger kind="GDB">SMMTT_DEBUGGER</debugger>
       <method v="2" />
-      <envs>
-        <env name="SMMTT_BITS" value=SMMTT_BITS_VAL />
-        <env name="SMMTT_ISOL" value=SMMTT_ISOL_VAL />
-        <env name="SMMTT_TEST" value=SMMTT_TEST_VAL />
-      </envs>
   </configuration>
 </component>

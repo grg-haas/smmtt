@@ -144,7 +144,7 @@ jobs:
         path: ccache.tar.xz
         key: ${{ steps.restore-ccache.outputs.cache-primary-key }}
 
-  test:
+  test-boot:
     needs: build
     runs-on: ubuntu-latest
     strategy:
@@ -180,5 +180,37 @@ jobs:
 
     - name: Check expected
       if: ${{ matrix.test == 'tests' }}
+      run: |
+        [[ ! -z $(cat run.log | grep "EXIT: STATUS=1") ]]
+
+  test-smmtt:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [smmtt32-smmtt34, smmtt64-smmtt46, smmtt64-smmtt56]
+        perms: [disallow, allow, rw-disallow, rw-allow-r, rw-allow-rw]
+
+    steps:
+    - name: Checkout SMMTT
+      uses: actions/checkout@v4
+      with:
+        submodules: 'false'
+
+    - name: Restore build directory
+      uses: actions/download-artifact@v4
+      with:
+        name: build
+        path: .
+
+    - name: Decompress build directory
+      run: cat build.tar.xz | xz -d -T0 | tar -xf -
+
+    - name: Run test
+      run: |
+        make run-unittests-${{ matrix.mode }}-${{ matrix.perms }} 2>&1 | tee run.log
+
+    - name: Check expected
       run: |
         [[ ! -z $(cat run.log | grep "EXIT: STATUS=1") ]]
