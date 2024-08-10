@@ -105,12 +105,12 @@ jobs:
 
     - name: Compress build directory
       run: |
-        COMPRESS_FILES="build/rel/qemu/qemu-system-riscv32"
-        COMPRESS_FILES="$COMPRESS_FILES build/rel/qemu/qemu-system-riscv64"
         for bits in 32 64 ; do
           for test in sbi smmtt; do
             COMPRESS_FILES="$COMPRESS_FILES build/rel/tests$bits/riscv/$test.flat"
           done
+
+          COMPRESS_FILES="$COMPRESS_FILES build/rel/qemu/qemu-system-riscv$bits"
           COMPRESS_FILES="$COMPRESS_FILES build/rel/linux$bits/arch/riscv/boot/Image"
           COMPRESS_FILES="$COMPRESS_FILES build/rel/opensbi$bits/platform/generic/firmware/fw_jump.bin"
         done
@@ -171,6 +171,7 @@ jobs:
       run: cat build.tar.xz | xz -d -T0 | tar -xf -
 
     - name: Run test
+      timeout-minutes: 1
       run: |
         make run-${{ matrix.test }}-${{ matrix.isolation }}${{ matrix.bits }} 2>&1 | tee run.log
 
@@ -209,6 +210,7 @@ jobs:
       run: cat build.tar.xz | xz -d -T0 | tar -xf -
 
     - name: Run test
+      timeout-minutes: 1
       run: |
         make run-unittests-${{ matrix.mode }}-${{ matrix.perms }} 2>&1 | tee run.log
 
