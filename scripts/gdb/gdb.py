@@ -3,16 +3,15 @@ import os
 # Constants
 KERNEL32_LOAD_ADDR = 0x80400000
 KERNEL64_LOAD_ADDR = 0x80200000
-KERNEL_SECONDARY_LOAD_ADDR = 0xBC000000
-
+KERNEL_SECONDARY_LOAD_ADDR = 0x90000000
 
 class DiscoveryBreakpoint(gdb.Breakpoint):
 	def __init__(self):
-		super().__init__('_fw_start', internal=True)
+		super().__init__('_fw_start', temporary=True, internal=True)
+		self.hit = False
 		self.SMMTT_BITS = None
 		self.SMMTT_ISOL = None
 		self.SMMTT_TEST = None
-		self.hit = False
 
 	def determine_name(self, arch):
 		name = arch.name()
@@ -78,53 +77,57 @@ class DiscoveryBreakpoint(gdb.Breakpoint):
 
 
 	def stop(self):
-		self.hit = True
-		arch = gdb.selected_frame().architecture()
-		if self.SMMTT_BITS is None:
-			self.determine_name(arch)
+		if not self.hit:
+			self.hit = True
+			arch = gdb.selected_frame().architecture()
+			if self.SMMTT_BITS is None:
+				self.determine_name(arch)
 
-		if self.SMMTT_ISOL is None:
-			self.determine_isol(arch)
+			if self.SMMTT_ISOL is None:
+				self.determine_isol(arch)
 
-		if self.SMMTT_TEST is None:
-			self.determine_test()
+			if self.SMMTT_TEST is None:
+				self.determine_test()
 
+			self.add_symbol_files()
+		return False
 
-def add_symbol_files(SMMTT_BITS, SMMTT_ISOL, SMMTT_TEST):
-	OPENSBI_BUILDDIR = os.getenv(f'OPENSBI{SMMTT_BITS}_BUILDDIR')
-	if OPENSBI_BUILDDIR is None:
-		OPENSBI_BUILDDIR = f'build/dbg/opensbi{SMMTT_BITS}'
+	def add_symbol_files(self):
+		print('add_symbol_files called')
+		OPENSBI_BUILDDIR = os.getenv(f'OPENSBI{self.SMMTT_BITS}_BUILDDIR')
+		if OPENSBI_BUILDDIR is None:
+			OPENSBI_BUILDDIR = f'build/dbg/opensbi{self.SMMTT_BITS}'
 
-	LINUX_BUILDDIR = os.getenv(f'LINUX{SMMTT_BITS}_BUILDDIR')
-	if LINUX_BUILDDIR is None:
-		LINUX_BUILDDIR = f'build/dbg/linux{SMMTT_BITS}'
+		LINUX_BUILDDIR = os.getenv(f'LINUX{self.SMMTT_BITS}_BUILDDIR')
+		if LINUX_BUILDDIR is None:
+			LINUX_BUILDDIR = f'build/dbg/linux{self.SMMTT_BITS}'
 
-	TESTS_BUILDDIR = os.getenv(f'TESTS{SMMTT_BITS}_BUILDDIR')
-	if TESTS_BUILDDIR is None:
-		TESTS_BUILDDIR = f'build/dbg/tests{SMMTT_BITS}'
+		TESTS_BUILDDIR = os.getenv(f'TESTS{self.SMMTT_BITS}_BUILDDIR')
+		if TESTS_BUILDDIR is None:
+			TESTS_BUILDDIR = f'build/dbg/tests{self.SMMTT_BITS}'
 
-	# Always add opensbi symbol files
-	gdb.execute(f'add-symbol-file {OPENSBI_BUILDDIR}/platform/generic/firmware/fw_jump.elf')
+		# Always add opensbi symbol files
+		gdb.execute(f'add-symbol-file {OPENSBI_BUILDDIR}/platform/generic/firmware/fw_jump.elf')
 
-	# Add test-specific files
-	if SMMTT_TEST == 'linux':
-		gdb.execute(f'add-symbol-file {LINUX_BUILDDIR}/vmlinux')
+		# Add test-specific files
+		if self.SMMTT_TEST == 'linux':
+			gdb.execute(f'add-symbol-file {LINUX_BUILDDIR}/vmlinux')
 
-	elif SMMTT_TEST == 'tests':
-		gdb.execute(f'add-symbol-file -o {hex(KERNEL_SECONDARY_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/sbi.elf')
+		elif self.SMMTT_TEST == 'tests':
+			gdb.execute(f'add-symbol-file -o {hex(KERNEL_SECONDARY_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/sbi.elf')
 
-		if SMMTT_BITS == '32':
-			gdb.execute(f'add-symbol-file -o {hex(KERNEL32_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/sbi.elf')
-		elif SMMTT_BITS == '64':
-			gdb.execute(f'add-symbol-file -o {hex(KERNEL64_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/sbi.elf')
+			if self.SMMTT_BITS == '32':
+				gdb.execute(f'add-symbol-file -o {hex(KERNEL32_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/sbi.elf')
+			elif self.SMMTT_BITS == '64':
+				gdb.execute(f'add-symbol-file -o {hex(KERNEL64_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/sbi.elf')
 
-	elif SMMTT_TEST == 'unittests':
-		gdb.execute(f'add-symbol-file -o {hex(KERNEL_SECONDARY_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/smmtt.elf')
+		elif self.SMMTT_TEST == 'unittests':
+			gdb.execute(f'add-symbol-file -o {hex(KERNEL_SECONDARY_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/smmtt.elf')
 
-		if SMMTT_BITS == '32':
-			gdb.execute(f'add-symbol-file -o {hex(KERNEL32_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/smmtt.elf')
-		elif SMMTT_BITS == '64':
-			gdb.execute(f'add-symbol-file -o {hex(KERNEL64_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/smmtt.elf')
+			if self.SMMTT_BITS == '32':
+				gdb.execute(f'add-symbol-file -o {hex(KERNEL32_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/smmtt.elf')
+			elif self.SMMTT_BITS == '64':
+				gdb.execute(f'add-symbol-file -o {hex(KERNEL64_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/smmtt.elf')
 
 # We need to defer feature discovery until we have a stack frame.
 # Otherwise, GDB does not expose the information we need. In this case,
@@ -133,14 +136,3 @@ def add_symbol_files(SMMTT_BITS, SMMTT_ISOL, SMMTT_TEST):
 # make sure to only break on the coldbooting thread.
 
 db = DiscoveryBreakpoint()
-db.thread = 1
-db.enabled = True
-
-def stop_handler(event):
-	if db.hit:
-		add_symbol_files(db.SMMTT_BITS, db.SMMTT_ISOL, db.SMMTT_TEST)
-		db.delete()
-		gdb.events.stop.disconnect(stop_handler)
-
-# Connect the stop handler
-gdb.events.stop.connect(stop_handler)
