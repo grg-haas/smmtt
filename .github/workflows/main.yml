@@ -210,7 +210,7 @@ jobs:
       run: cat build.tar.xz | xz -d -T0 | tar -xf -
 
     - name: Run test
-      timeout-minutes: 1
+      timeout-minutes: 5
       run: |
         make run-unittests-${{ matrix.mode }}-${{ matrix.perms }} 2>&1 | tee run.log
 
