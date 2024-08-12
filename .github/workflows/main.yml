@@ -105,14 +105,15 @@ jobs:
 
     - name: Compress build directory
       run: |
-        COMPRESS_FILES="build/rel/qemu/qemu-system-riscv32"
-        COMPRESS_FILES="$COMPRESS_FILES build/rel/qemu/qemu-system-riscv64"
-        COMPRESS_FILES="$COMPRESS_FILES build/rel/tests32/riscv/sbi.flat"
-        COMPRESS_FILES="$COMPRESS_FILES build/rel/tests64/riscv/sbi.flat"
-        COMPRESS_FILES="$COMPRESS_FILES build/rel/linux32/arch/riscv/boot/Image"
-        COMPRESS_FILES="$COMPRESS_FILES build/rel/linux64/arch/riscv/boot/Image"
-        COMPRESS_FILES="$COMPRESS_FILES build/rel/opensbi32/platform/generic/firmware/fw_jump.bin"
-        COMPRESS_FILES="$COMPRESS_FILES build/rel/opensbi64/platform/generic/firmware/fw_jump.bin"
+        for bits in 32 64 ; do
+          for test in sbi smmtt; do
+            COMPRESS_FILES="$COMPRESS_FILES build/rel/tests$bits/riscv/$test.flat"
+          done
+
+          COMPRESS_FILES="$COMPRESS_FILES build/rel/qemu/qemu-system-riscv$bits"
+          COMPRESS_FILES="$COMPRESS_FILES build/rel/linux$bits/arch/riscv/boot/Image"
+          COMPRESS_FILES="$COMPRESS_FILES build/rel/opensbi$bits/platform/generic/firmware/fw_jump.bin"
+        done
         tar -cf - $COMPRESS_FILES | xz -9 -T0 > build.tar.xz
 
     - name: Upload build directory
@@ -144,7 +145,7 @@ jobs:
         path: ccache.tar.xz
         key: ${{ steps.restore-ccache.outputs.cache-primary-key }}
 
-  test:
+  test-boot:
     needs: build
     runs-on: ubuntu-latest
     strategy:
@@ -170,6 +171,7 @@ jobs:
       run: cat build.tar.xz | xz -d -T0 | tar -xf -
 
     - name: Run test
+      timeout-minutes: 1
       run: |
         make run-${{ matrix.test }}-${{ matrix.isolation }}${{ matrix.bits }} 2>&1 | tee run.log
 
@@ -182,3 +184,36 @@ jobs:
       if: ${{ matrix.test == 'tests' }}
       run: |
         [[ ! -z $(cat run.log | grep "EXIT: STATUS=1") ]]
+
+  test-smmtt:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [smmtt32-smmtt34, smmtt64-smmtt46, smmtt64-smmtt56]
+        perms: [disallow, allow, rw-disallow, rw-allow-r, rw-allow-rw]
+
+    steps:
+    - name: Checkout SMMTT
+      uses: actions/checkout@v4
+      with:
+        submodules: 'false'
+
+    - name: Restore build directory
+      uses: actions/download-artifact@v4
+      with:
+        name: build
+        path: .
+
+    - name: Decompress build directory
+      run: cat build.tar.xz | xz -d -T0 | tar -xf -
+
+    - name: Run test
+      timeout-minutes: 5
+      run: |
+        make run-unittests-${{ matrix.mode }}-${{ matrix.perms }} 2>&1 | tee run.log
+
+    - name: Check expected
+      run: |
+        [[ -z $(cat run.log | grep "FAIL") ]]

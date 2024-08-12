@@ -51,10 +51,17 @@ $(foreach proj,$(PROJECTS),	\
 		$(eval $(call build-$(proj),$(bits)))))
 
 # Generate tests
-$(foreach mode,$(ISOLATION),			\
-	$(foreach bits,$(BITS),			\
-		$(foreach test,$(TESTS_TO_RUN), \
-			$(eval $(call run-targets,$(bits),$(mode),$(test))))))
+$(foreach mode,$(ISOLATION),							\
+	$(foreach bits,$(BITS),							\
+		$(foreach test,$(TESTS_TO_RUN), 				\
+			$(eval $(call run-targets,$(bits),$(mode),$(test)))	\
+		)								\
+	)									\
+)
+
+$(foreach bits,$(BITS), 				\
+	$(eval $(call unit-test-targets,$(bits)))	\
+)
 
 # Cleaning
 .PHONY: clean

@@ -3,20 +3,15 @@ import os
 # Constants
 KERNEL32_LOAD_ADDR = 0x80400000
 KERNEL64_LOAD_ADDR = 0x80200000
-KERNEL_SECONDARY_LOAD_ADDR = 0xBC000000
-
-# Extract injected variables
-SMMTT_BITS = os.getenv('SMMTT_BITS')
-SMMTT_ISOL = os.getenv('SMMTT_ISOL')
-SMMTT_TEST = os.getenv('SMMTT_TEST')
+KERNEL_SECONDARY_LOAD_ADDR = 0x90000000
 
 class DiscoveryBreakpoint(gdb.Breakpoint):
-	def __init__(self, SMMTT_BITS, SMMTT_ISOL, SMMTT_TEST):
-		super().__init__('_fw_start', internal=True)
-		self.SMMTT_BITS = SMMTT_BITS
-		self.SMMTT_ISOL = SMMTT_ISOL
-		self.SMMTT_TEST = SMMTT_TEST
+	def __init__(self):
+		super().__init__('_fw_start', temporary=True, internal=True)
 		self.hit = False
+		self.SMMTT_BITS = None
+		self.SMMTT_ISOL = None
+		self.SMMTT_TEST = None
 
 	def determine_name(self, arch):
 		name = arch.name()
@@ -42,6 +37,7 @@ class DiscoveryBreakpoint(gdb.Breakpoint):
 		addr = None
 		linuxmem = None
 		testmem = None
+		unittestmem = None
 
 		if self.SMMTT_BITS == '32':
 			addr = KERNEL32_LOAD_ADDR
@@ -51,15 +47,19 @@ class DiscoveryBreakpoint(gdb.Breakpoint):
 			with open('build/dbg/tests32/riscv/sbi.flat', 'rb') as f:
 				testmem = f.read(16 * 1024)
 
+			with open('build/dbg/tests32/riscv/smmtt.flat', 'rb') as f:
+				unittestmem = f.read(16 * 1024)
+
 		elif self.SMMTT_BITS == '64':
 			addr = KERNEL64_LOAD_ADDR
-
 			with open('build/dbg/linux64/arch/riscv/boot/Image', 'rb') as f:
 				linuxmem = f.read(16 * 1024)
 
 			with open('build/dbg/tests64/riscv/sbi.flat', 'rb') as f:
 				testmem = f.read(16 * 1024)
 
+			with open('build/dbg/tests64/riscv/smmtt.flat', 'rb') as f:
+				unittestmem = f.read(16 * 1024)
 
 		# Read the first 16 kilobytes
 		inf = gdb.selected_inferior()
@@ -69,68 +69,70 @@ class DiscoveryBreakpoint(gdb.Breakpoint):
 			self.SMMTT_TEST = 'linux'
 		elif all([a == b for a, b in zip(mem, testmem)]):
 			self.SMMTT_TEST = 'tests'
+		elif all([a == b for a, b in zip(mem, unittestmem)]):
+			self.SMMTT_TEST = 'unittests'
 		else:
 			print(f'Unrecognized kernel memory')
 			exit(-1)
 
 
 	def stop(self):
-		self.hit = True
-		arch = gdb.selected_frame().architecture()
-		if self.SMMTT_BITS is None:
-			self.determine_name(arch)
+		if not self.hit:
+			self.hit = True
+			arch = gdb.selected_frame().architecture()
+			if self.SMMTT_BITS is None:
+				self.determine_name(arch)
 
-		if self.SMMTT_ISOL is None:
-			self.determine_isol(arch)
+			if self.SMMTT_ISOL is None:
+				self.determine_isol(arch)
 
-		if self.SMMTT_TEST is None:
-			self.determine_test()
+			if self.SMMTT_TEST is None:
+				self.determine_test()
 
+			self.add_symbol_files()
+		return False
 
-def add_symbol_files(SMMTT_BITS, SMMTT_ISOL, SMMTT_TEST):
-	OPENSBI_BUILDDIR = os.getenv(f'OPENSBI{SMMTT_BITS}_BUILDDIR')
-	if OPENSBI_BUILDDIR is None:
-		OPENSBI_BUILDDIR = f'build/dbg/opensbi{SMMTT_BITS}'
+	def add_symbol_files(self):
+		print('add_symbol_files called')
+		OPENSBI_BUILDDIR = os.getenv(f'OPENSBI{self.SMMTT_BITS}_BUILDDIR')
+		if OPENSBI_BUILDDIR is None:
+			OPENSBI_BUILDDIR = f'build/dbg/opensbi{self.SMMTT_BITS}'
 
-	LINUX_BUILDDIR = os.getenv(f'LINUX{SMMTT_BITS}_BUILDDIR')
-	if LINUX_BUILDDIR is None:
-		LINUX_BUILDDIR = f'build/dbg/linux{SMMTT_BITS}'
+		LINUX_BUILDDIR = os.getenv(f'LINUX{self.SMMTT_BITS}_BUILDDIR')
+		if LINUX_BUILDDIR is None:
+			LINUX_BUILDDIR = f'build/dbg/linux{self.SMMTT_BITS}'
 
-	TESTS_BUILDDIR = os.getenv(f'TESTS{SMMTT_BITS}_BUILDDIR')
-	if TESTS_BUILDDIR is None:
-		TESTS_BUILDDIR = f'build/dbg/tests{SMMTT_BITS}'
+		TESTS_BUILDDIR = os.getenv(f'TESTS{self.SMMTT_BITS}_BUILDDIR')
+		if TESTS_BUILDDIR is None:
+			TESTS_BUILDDIR = f'build/dbg/tests{self.SMMTT_BITS}'
 
-	# Always add opensbi symbol files
-	gdb.execute(f'add-symbol-file {OPENSBI_BUILDDIR}/platform/generic/firmware/fw_jump.elf')
+		# Always add opensbi symbol files
+		gdb.execute(f'add-symbol-file {OPENSBI_BUILDDIR}/platform/generic/firmware/fw_jump.elf')
 
-	# Add test-specific files
-	if SMMTT_TEST == 'linux':
-		gdb.execute(f'add-symbol-file {LINUX_BUILDDIR}/vmlinux')
-	elif SMMTT_TEST == 'tests':
-		gdb.execute(f'add-symbol-file -o {hex(KERNEL_SECONDARY_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/sbi.elf')
+		# Add test-specific files
+		if self.SMMTT_TEST == 'linux':
+			gdb.execute(f'add-symbol-file {LINUX_BUILDDIR}/vmlinux')
 
-		if SMMTT_BITS == '32':
-			gdb.execute(f'add-symbol-file -o {hex(KERNEL32_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/sbi.elf')
-		elif SMMTT_BITS == '64':
-			gdb.execute(f'add-symbol-file -o {hex(KERNEL64_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/sbi.elf')
+		elif self.SMMTT_TEST == 'tests':
+			gdb.execute(f'add-symbol-file -o {hex(KERNEL_SECONDARY_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/sbi.elf')
 
-if any([s is None for s in [SMMTT_BITS, SMMTT_ISOL, SMMTT_TEST]]):
-	# We need to defer feature discovery until we have a stack frame.
-	# Otherwise, GDB does not expose the information we need. In this case,
-	# we assume something external (typically CLion) has loaded the initial
-	# OpenSBI symbol file for us so we can set this breakpoint.
-	db = DiscoveryBreakpoint(SMMTT_BITS, SMMTT_ISOL, SMMTT_TEST)
-	def stop_handler(event):
-		if db.hit:
-			SMMTT_BITS = db.SMMTT_BITS
-			SMMTT_ISOL = db.SMMTT_ISOL
-			SMMTT_TEST = db.SMMTT_TEST
-			db.delete()
-			gdb.events.stop.disconnect(stop_handler)
-			add_symbol_files(SMMTT_BITS, SMMTT_ISOL, SMMTT_TEST)
+			if self.SMMTT_BITS == '32':
+				gdb.execute(f'add-symbol-file -o {hex(KERNEL32_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/sbi.elf')
+			elif self.SMMTT_BITS == '64':
+				gdb.execute(f'add-symbol-file -o {hex(KERNEL64_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/sbi.elf')
 
-	# Connect the stop handler
-	gdb.events.stop.connect(stop_handler)
+		elif self.SMMTT_TEST == 'unittests':
+			gdb.execute(f'add-symbol-file -o {hex(KERNEL_SECONDARY_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/smmtt.elf')
 
-else:
-	add_symbol_files(SMMTT_BITS, SMMTT_ISOL, SMMTT_TEST)
+			if self.SMMTT_BITS == '32':
+				gdb.execute(f'add-symbol-file -o {hex(KERNEL32_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/smmtt.elf')
+			elif self.SMMTT_BITS == '64':
+				gdb.execute(f'add-symbol-file -o {hex(KERNEL64_LOAD_ADDR)} {TESTS_BUILDDIR}/riscv/smmtt.elf')
+
+# We need to defer feature discovery until we have a stack frame.
+# Otherwise, GDB does not expose the information we need. In this case,
+# we assume something external (typically CLion) has loaded the initial
+# OpenSBI symbol file for us so we can set this breakpoint. We'll also
+# make sure to only break on the coldbooting thread.
+
+db = DiscoveryBreakpoint()
