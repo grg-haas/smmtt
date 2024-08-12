@@ -4,7 +4,8 @@ define __run-target
 
 .PHONY: run-$(1)
 run-$(1):
-	$$(QEMU$(1)_CMD)
+	-mkdir -p $$(dir $$(LOGFILE))
+	$$(QEMU$(1)_CMD) 2>&1 | tee $$(LOGFILE)
 
 ideacfgs: $$(IDEACFG)/run-$(1).xml
 $$(IDEACFG)/run-$(1).xml: $$(SMMTT)/mk/run.mk
@@ -13,6 +14,11 @@ $$(IDEACFG)/run-$(1).xml: $$(SMMTT)/mk/run.mk
                 -DSMMTT_PARAMS="\"$$(QEMU$(1)_RUN_FLAGS_STRIPPED)\"" \
                 -DSMMTT_QEMU_PATH=\"$$(QEMU_BUILDDIR)/qemu-system-riscv$(2)\" \
                 $$(SMMTT)/scripts/templates/run.xml > $$@
+
+$$(SMMTT)/out/$(1).log: LOGFILE=$$(SMMTT)/out/$(1).log
+$$(SMMTT)/out/$(1).log: run-$(1)
+alltests: $$(SMMTT)/out/$(1).log
+
 endef
 
 ## Targets/helpers for debugging programs inside of QEMU ##
