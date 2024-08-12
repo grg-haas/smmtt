@@ -169,12 +169,12 @@ $(3)_RUN_FLAGS += \
 
 # Add test memory regions
 $(3)_RUN_FLAGS += \
-	-device opensbi-memregion,id=oneg,base=0xC0000000,size=0x40000000,mmio=false,reserve=true \
-	-device opensbi-memregion,id=twom,base=0xB0000000,size=0x200000,mmio=false,reserve=true \
-	-device opensbi-memregion,id=l1,base=0xB8000000,size=0x1000,mmio=false,reserve=true
+	-device opensbi-memregion,id=test_oneg,base=0xC0000000,size=0x40000000,mmio=false,reserve=true \
+	-device opensbi-memregion,id=test_twom,base=0xB0000000,size=0x200000,mmio=false,reserve=true \
+	-device opensbi-memregion,id=test_l1,base=0xB8000000,size=0x1000,mmio=false,reserve=true
 
 $(3)_BOOT = possible-harts=0-1,boot-hart=0x0,next-addr=0x90000000,next-arg1=0x90200000,next-mode=1,smmtt-mode=$(4),system-reset-allowed=true
-$(3)_REGIONS = region0=mem,perms0=0x3f,region1=uart,perms1=0x3f,region2=oneg,perms2=$(5),region3=twom,perms3=$(5),region4=l1,perms4=$(5)
+$(3)_REGIONS = region0=mem,perms0=0x3f,region1=uart,perms1=0x3f,region2=test_oneg,perms2=$(5),region3=test_twom,perms3=$(5),region4=test_l1,perms4=$(5)
 
 # Add secondary domain
 $(3)_RUN_FLAGS += \
@@ -189,14 +189,15 @@ $$(eval $$(call __misc-targets,unittests-smmtt$(1)-$(2)))
 
 endef
 
-SMMTT1_PERM_INDICES	:= 1 2 3
-SMMTT0_PERM_INDICES	:= 1 2
+SMMTT0_PERM_INDICES	:= 1 2 3
+SMMTT1_PERM_INDICES	:= 1 2
 
-SMMTT1_PERM_VALUES	:= 0x0 0xf 0x1f
-SMMTT0_PERM_VALUES	:= 0x0 0x3f
+# These permissions assume read implies execute
+SMMTT0_PERM_VALUES	:= 0x0 0x2f 0x3f
+SMMTT1_PERM_VALUES	:= 0x0 0x3f
 
-SMMTT1_PERM_NAMES	:= disallow allow-r allow-rw
-SMMTT0_PERM_NAMES	:= disallow allow
+SMMTT0_PERM_NAMES	:= disallow allow-r allow-rw
+SMMTT1_PERM_NAMES	:= disallow allow
 
 ## Subgenerator
 #	1. Bits
@@ -222,16 +223,16 @@ endef
 SMMTT32_MODE_INDICES	:= 1 2
 SMMTT64_MODE_INDICES	:= 1 2 3 4
 
-SMMTT32_MODE_NAMES 	:= smmtt34-rw smmtt34
-SMMTT64_MODE_NAMES 	:= smmtt46-rw smmtt46 smmtt56-rw smmtt56
+SMMTT32_MODE_NAMES 	:= smmtt34 smmtt34-rw
+SMMTT64_MODE_NAMES 	:= smmtt46 smmtt46-rw smmtt56 smmtt56-rw
 
 define unit-test-targets
 
 $(foreach mode,$(SMMTT$(1)_MODE_INDICES),
 
 SMMTT$(1)_$(mode)_MODENAME = $(word $(mode),$(SMMTT$(1)_MODE_NAMES))
-SMMTT$(1)_$(mode)_ISRW = $(shell echo $$(( $(mode) % 2 )))
-$$(eval $$(call __unit-test-perms,$(1),$(mode),$$(SMMTT$(1)_$(mode)_MODENAME),$$(SMMTT$(1)_$(mode)_ISRW)))
+SMMTT$(1)_$(mode)_ISNOTRW = $(shell echo $$(( $(mode) % 2 )))
+$$(eval $$(call __unit-test-perms,$(1),$(mode),$$(SMMTT$(1)_$(mode)_MODENAME),$$(SMMTT$(1)_$(mode)_ISNOTRW)))
 
 )
 

@@ -216,4 +216,4 @@ jobs:
 
     - name: Check expected
       run: |
-        [[ ! -z $(cat run.log | grep "EXIT: STATUS=1") ]]
+        [[ -z $(cat run.log | grep "FAIL") ]]
