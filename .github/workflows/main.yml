@@ -192,7 +192,7 @@ jobs:
       fail-fast: false
       matrix:
         mode: [smmtt32-smmtt34, smmtt64-smmtt46, smmtt64-smmtt56]
-        perms: [disallow, allow, rw-disallow, rw-allow-r, rw-allow-rw]
+        perms: [disallow, allow-rx, allow-rw, allow-rwx]
 
     steps:
     - name: Checkout SMMTT

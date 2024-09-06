@@ -37,12 +37,9 @@ typedef enum {
     SMMTT_BARE = 0,
 #if defined(__SMMTT32)
     SMMTT_34,
-    SMMTT_34_rw,
 #else
     SMMTT_46,
-    SMMTT_46_rw,
     SMMTT_56,
-    SMMTT_56_rw,
 #endif
     SMMTT_MAX
 } smmtt_mode_t;
@@ -69,82 +66,82 @@ typedef enum {
 
 // Masks
 
-#define MTTL3         _ULL(0x7FE00000000000)
+#if defined(__SMMTT32)
 
-#define MTTL2_RW      _ULL(0x001FFFFE000000)
-#define MTTL2_RW_OFFS _ULL(0x00000001E00000)
-#define MTTL1_RW      _ULL(0x00000001FF0000)
-#define MTTL1_RW_OFFS _ULL(0x0000000000F000)
+#define SPA_PN0     _ULL(0x000007000)
+#define SPA_PN1     _ULL(0x001ff8000)
+#define SPA_XM_OFFS _ULL(0x001C00000)
+#define SPA_PN2     _ULL(0x3fe000000)
 
-#define MTTL2         _ULL(0x001FFFFC000000)
-#define MTTL2_OFFS    _ULL(0x00000003E00000)
-#define MTTL1         _ULL(0x00000003FE0000)
-#define MTTL1_OFFS    _ULL(0x0000000001F000)
+#define SPA_
+
+#else
+
+#define SPA_PN0     _ULL(0x0000000000f000)
+#define SPA_PN1     _ULL(0x00000001ff0000)
+#define SPA_XM_OFFS _ULL(0x00000001e00000)
+#define SPA_PN2     _ULL(0x003ffffe000000)
+#define SPA_PN3     _ULL(0xffc00000000000)
+
+#endif
+
 
 // Types
 
 typedef enum {
-    SMMTT_TYPE_1G_DISALLOW      = 0b00,
-    SMMTT_TYPE_1G_ALLOW         = 0b01,
-    SMMTT_TYPE_MTT_L1_DIR       = 0b10,
-    SMMTT_TYPE_2M_PAGES         = 0b11
+    SMMTT_TYPE_1G_DISALLOW      = 0b000,
+    SMMTT_TYPE_1G_ALLOW_RX      = 0b001,
+    SMMTT_TYPE_1G_ALLOW_RW      = 0b010,
+    SMMTT_TYPE_1G_ALLOW_RWX     = 0b011,
+    SMMTT_TYPE_MTT_L1_DIR       = 0b100,
+#if defined(__SMMTT32)
+    SMMTT_TYPE_4M_PAGES         = 0b101,
+#else
+    SMMTT_TYPE_2M_PAGES         = 0b110,
+#endif
 } smmtt_type_t;
-
-typedef enum {
-    SMMTT_TYPE_RW_1G_DISALLOW   = 0b0000,
-    SMMTT_TYPE_RW_1G_ALLOW_R    = 0b0001,
-    SMMTT_TYPE_RW_1G_ALLOW_RW   = 0b0011,
-    SMMTT_TYPE_RW_MTT_L1_DIR    = 0b0100,
-    SMMTT_TYPE_RW_2M_PAGES      = 0b0111
-} smmtt_type_rw_t;
 
 // Permissions
 
-#define MTTL2_2M_PAGES_PERMS        _ULL(0b1)
-#define MTTL2_2M_PAGES_PERMS_BITS   (1)
-
 typedef enum {
-    SMMTT_PERMS_2M_PAGES_DISALLOWED = 0b0,
-    SMMTT_PERMS_2M_PAGES_ALLOWED    = 0b1
-} smmtt_perms_2m_pages_t;
-
-#define MTTL2_RW_2M_PAGES_PERMS         _ULL(0b11)
-#define MTTL2_RW_2M_PAGES_PERMS_BITS    (2)
-
-typedef enum {
-    SMMTT_PERMS_2M_PAGES_RW_DISALLOWED  = 0b00,
-    SMMTT_PERMS_2M_PAGES_RW_READ        = 0b01,
-    SMMTT_PERMS_2M_PAGES_RW_READ_WRITE  = 0b11
-} smmtt_perms_2m_pages_rw_t;
-
-#define MTTL1_L1_DIR_PERMS             _ULL(0b11)
-#define MTTL1_L1_DIR_PERMS_BITS        (2)
+    SMMTT_PERMS_XM_PAGES_DISALLOWED = 0b00,
+    SMMTT_PERMS_XM_PAGES_ALLOW_RX   = 0b01,
+    SMMTT_PERMS_XM_PAGES_ALLOW_RW   = 0b10,
+    SMMTT_PERMS_XM_PAGES_ALLOW_RWX  = 0b11,
+} smmtt_perms_xm_pages_t;
 
 typedef enum {
     SMMTT_PERMS_MTT_L1_DIR_DISALLOWED   = 0b00,
-    SMMTT_PERMS_MTT_L1_DIR_ALLOWED      = 0b01,
+    SMMTT_PERMS_MTT_L1_DIR_ALLOW_RX     = 0b01,
+    SMMTT_PERMS_MTT_L1_DIR_ALLOW_RW     = 0b10,
+    SMMTT_PERMS_MTT_L1_DIR_ALLOW_RWX    = 0b11,
 } smmtt_perms_mtt_l1_dir_t;
 
-#define MTTL1_RW_L1_DIR_PERMS               _ULL(0b1111)
-#define MTTL1_RW_L1_DIR_PERMS_BITS          (4)
+#define MTT_PERMS_MASK  _ULL(0b11)
+#define MTT_PERMS_BITS  (2)
 
-typedef enum {
-    SMMTT_PERMS_MTT_L1_DIR_RW_DISALLOWED    = 0b0000,
-    SMMTT_PERMS_MTT_L1_DIR_RW_READ          = 0b0001,
-    SMMTT_PERMS_MTT_L1_DIR_RW_READ_WRITE    = 0b0011,
-} smmtt_perms_mtt_l1_dir_rw_t;
-
-// Macros for generating bitfields for permissions at specific indices
-#define MTT_PERM_MASK(level, rw, name) \
-    ((rw) ? (MTTL##level##_RW_##name##_PERMS) : (MTTL##level##_##name##_PERMS))
-
-#define MTT_PERM_BITS(level, rw, name) \
-    ((rw) ? (MTTL##level##_RW_##name##_PERMS_BITS) : (MTTL##level##_##name##_PERMS_BITS))
-
-#define MTT_PERM_FIELD(level, rw, name, idx) \
-    MTT_PERM_MASK(level, rw, name) << (MTT_PERM_BITS(level, rw, name) * (idx))
+#define MTT_PERM_FIELD(idx) \
+    MTT_PERMS_MASK << (MTT_PERMS_BITS * (idx))
 
 // Entries
+
+#if defined(__SMMTT32)
+
+typedef struct {
+    uint32_t info : 22;
+    uint32_t type : 3;
+    uint32_t zero : 7;
+} mttl2_entry_t;
+
+typedef uint32_t mttl1_entry_t;
+
+typedef union {
+    uint32_t raw;
+    mttl2_entry_t mttl2;
+    mttl1_entry_t mttl1;
+} smmtt_mtt_entry_t;
+
+#else
 
 typedef struct {
     uint64_t mttl2_ppn : 44;
@@ -153,19 +150,8 @@ typedef struct {
 
 typedef struct {
     uint64_t info : 44;
-    uint64_t type : 4;
-    uint64_t zero : 16;
-} mttl2_rw_t;
-
-typedef struct {
-    uint64_t info : 44;
-    uint64_t type : 2;
-    uint64_t zero : 18;
-} mttl2_t;
-
-typedef union {
-    mttl2_t mttl2;
-    mttl2_rw_t mttl2_rw;
+    uint64_t type : 3;
+    uint64_t zero : 17;
 } mttl2_entry_t;
 
 typedef uint64_t mttl1_entry_t;
@@ -176,5 +162,9 @@ typedef union {
     mttl2_entry_t mttl2;
     mttl1_entry_t mttl1;
 } smmtt_mtt_entry_t;
+
+#endif
+
+
 
 #endif // __SMMTT_DEFS_H__

@@ -195,26 +195,19 @@ $$(eval $$(call __misc-targets,unittests-smmtt$(1)-$(2)))
 
 endef
 
-SMMTT0_PERM_INDICES	:= 1 2 3
-SMMTT1_PERM_INDICES	:= 1 2
-
-# These permissions assume read implies execute
-SMMTT0_PERM_VALUES	:= 0x0 0x2f 0x3f
-SMMTT1_PERM_VALUES	:= 0x0 0x3f
-
-SMMTT0_PERM_NAMES	:= disallow allow-r allow-rw
-SMMTT1_PERM_NAMES	:= disallow allow
+SMMTT_PERM_INDICES	:= 1 2 3 4
+SMMTT_PERM_VALUES	:= 0x0 0x2f 0x1f 0x3f
+SMMTT_PERM_NAMES	:= disallow allow-rx allow-rw allow-rwx
 
 ## Subgenerator
 #	1. Bits
 #	2. Mode index
 #	3. Mode name
-#	4. Is mode rw
 define __unit-test-perms
 
-$(foreach perm,$(SMMTT$(4)_PERM_INDICES),
-SMMTT$(1)_$(perm)_PERMNAME = $(word $(perm),$(SMMTT$(4)_PERM_NAMES))
-SMMTT$(1)_$(perm)_PERMVAL = $(word $(perm),$(SMMTT$(4)_PERM_VALUES))
+$(foreach perm,$(SMMTT_PERM_INDICES),
+SMMTT$(1)_$(perm)_PERMNAME = $(word $(perm),$(SMMTT_PERM_NAMES))
+SMMTT$(1)_$(perm)_PERMVAL = $(word $(perm),$(SMMTT_PERM_VALUES))
 SMMTT$(1)_$(2)_$(perm)_NAME = $(3)-$$(SMMTT$(1)_$(perm)_PERMNAME)
 SMMTT$(1)_$(2)_$(perm)_QEMUNAME = QEMUunittests-smmtt$(1)-$$(SMMTT$(1)_$(2)_$(perm)_NAME)
 
@@ -226,19 +219,18 @@ endef
 ## Unit test generator
 ##	1. Bits (32/64)
 
-SMMTT32_MODE_INDICES	:= 1 2
-SMMTT64_MODE_INDICES	:= 1 2 3 4
+SMMTT32_MODE_INDICES	:= 1
+SMMTT64_MODE_INDICES	:= 1 2
 
-SMMTT32_MODE_NAMES 	:= smmtt34 smmtt34-rw
-SMMTT64_MODE_NAMES 	:= smmtt46 smmtt46-rw smmtt56 smmtt56-rw
+SMMTT32_MODE_NAMES 	:= smmtt34
+SMMTT64_MODE_NAMES 	:= smmtt46 smmtt56
 
 define unit-test-targets
 
 $(foreach mode,$(SMMTT$(1)_MODE_INDICES),
 
 SMMTT$(1)_$(mode)_MODENAME = $(word $(mode),$(SMMTT$(1)_MODE_NAMES))
-SMMTT$(1)_$(mode)_ISNOTRW = $(shell echo $$(( $(mode) % 2 )))
-$$(eval $$(call __unit-test-perms,$(1),$(mode),$$(SMMTT$(1)_$(mode)_MODENAME),$$(SMMTT$(1)_$(mode)_ISNOTRW)))
+$$(eval $$(call __unit-test-perms,$(1),$(mode),$$(SMMTT$(1)_$(mode)_MODENAME)))
 
 )
 
