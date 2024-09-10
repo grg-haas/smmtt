@@ -176,11 +176,11 @@ $(3)_RUN_FLAGS += \
 # Add test memory regions
 $(3)_RUN_FLAGS += \
 	-device opensbi-memregion,id=test_oneg,base=0xC0000000,size=0x40000000,mmio=false,reserve=true \
-	-device opensbi-memregion,id=test_twom,base=0xB0000000,size=0x200000,mmio=false,reserve=true \
+	-device opensbi-memregion,id=test_xm,base=0xB0000000,size=0x400000,mmio=false,reserve=true \
 	-device opensbi-memregion,id=test_l1,base=0xB8000000,size=0x1000,mmio=false,reserve=true
 
 $(3)_BOOT = possible-harts=0-1,boot-hart=0x0,next-addr=0x90000000,next-arg1=0x90200000,next-mode=1,smmtt-mode=$(4),system-reset-allowed=true
-$(3)_REGIONS = region0=mem,perms0=0x3f,region1=uart,perms1=0x3f,region2=test_oneg,perms2=$(5),region3=test_twom,perms3=$(5),region4=test_l1,perms4=$(5)
+$(3)_REGIONS = region0=mem,perms0=0x3f,region1=uart,perms1=0x3f,region2=test_oneg,perms2=$(5),region3=test_xm,perms3=$(5),region4=test_l1,perms4=$(5)
 
 # Add secondary domain
 $(3)_RUN_FLAGS += \
