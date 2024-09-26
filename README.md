@@ -119,17 +119,40 @@ Below is a summary of all the patches developed for this project, and their curr
 For patches marked `Pending`, some more integration effort is needed to clean these up
 before upstreaming. All changes can be found in the submodules of this main project.
 
-| Project | Patch | Status          |
-| --------|-------|-----------------|
-| OpenSBI | [lib: sbi: Heap improvements for SMMTT](http://lists.infradead.org/pipermail/opensbi/2024-August/007234.html) | Merged          |
-|         | [lib: utils: fdt_domain: Make opensbi-domain optional in CPU specification](http://lists.infradead.org/pipermail/opensbi/2024-August/007240.html) | Merged          |
-|         | [Prepare memregion handling for future isolation primitives](http://lists.infradead.org/pipermail/opensbi/2024-July/007173.html) | Awaiting review |
-|         | Implement SMSDID | Pending         |
-|         | Add actual memory size to memregion rather than maximum | Pending         |
-|         | Core SMMTT implementation | Pending         |
-|         | Invalidation instruction | Not done yet|
-| QEMU    | [Add support for generating OpenSBI domains in the device tree](https://lists.gnu.org/archive/html/qemu-devel/2024-08/msg00773.html) | Awaiting review |
-|         | Implement SMSDID | Pending         |
-|         | Core SMMTT implementation | Pending         |
-|         | Invalidation instruction | Not done yet|
-| kvm-unit-tests | Correctly handle reserved memory | Pending         |
+| Project        | Patch                                                                       | Status          |
+|----------------|-----------------------------------------------------------------------------|-----------------|
+| OpenSBI        | [lib: sbi: Heap improvements for SMMTT]                                     | Merged          |
+|                | [lib: utils: fdt_domain: Make opensbi-domain optional in CPU specification] | Merged          |
+|                | [Prepare memregion handling for future isolation primitives]                | Awaiting review |
+|                | Implement SMSDID                                                            | Pending         |
+|                | Add actual memory size to memregion rather than maximum                     | Pending         |
+|                | Core SMMTT implementation                                                   | Pending         |
+|                | Invalidation instruction                                                    | Not done yet    |
+| QEMU           | [Add support for generating OpenSBI domains in the device tree]             | Rejected        |
+|                | Implement SMSDID                                                            | Pending         |
+|                | Core SMMTT implementation                                                   | Pending         |
+|                | Invalidation instruction                                                    | Not done yet    |
+| kvm-unit-tests | Correctly handle reserved memory                                            | Pending         |
+
+[lib: sbi: Heap improvements for SMMTT]:
+    http://lists.infradead.org/pipermail/opensbi/2024-August/007234.html
+[lib: utils: fdt_domain: Make opensbi-domain optional in CPU specification]:
+    http://lists.infradead.org/pipermail/opensbi/2024-August/007240.html
+[Prepare memregion handling for future isolation primitives]:
+    http://lists.infradead.org/pipermail/opensbi/2024-July/007173.html
+
+[Add support for generating OpenSBI domains in the device tree]:
+    https://lists.gnu.org/archive/html/qemu-devel/2024-08/msg00773.html
+
+## Specification Coverage
+
+The following parts of the [SMMTT spec](https://github.com/riscv/riscv-smmtt) are implemented:
+
+| Section    | Name         | Implemented      | Notes                                                |
+|------------|--------------|------------------|------------------------------------------------------|
+| 3          | `SMSDID`     | Partially        | `mmtp` fully implemented                             |
+| 3.1        | `msdcfg`     | No (Not planned) |                                                      |
+| 3.2        | `MFENCE.SPA` | No (Not planned) |                                                      |
+| 3.3        | `MINVAL.SPA` | No (Planned)     | This is the invalidation instruction described above |
+| 4          | `SMMTT`      | Yes              |                                                      |
+| 5, 6, 7, 8 | -            | No (Not planned) |                                                      |
