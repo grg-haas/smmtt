@@ -109,7 +109,7 @@ endif
 ifeq ($(2),max)
 	QEMU$(3)-$(2)$(1)$(4)_RUN_FLAGS += -cpu max
 else ifeq ($(2),smmtt)
-	QEMU$(3)-$(2)$(1)$(4)_RUN_FLAGS += -cpu smmtt
+	QEMU$(3)-$(2)$(1)$(4)_RUN_FLAGS += -cpu smmtt,v=true
 
 	# Add reserved memory for SMMTT tables
 	QEMU$(3)-$(2)$(1)$(4)_RUN_FLAGS += \
