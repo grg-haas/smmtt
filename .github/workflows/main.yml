@@ -28,7 +28,7 @@ jobs:
               map(.browser_download_url)[]')
 
         for url in $TOOLCHAIN_URLS ; do wget -q "$url" ; done
-        for f in *.tar.gz ; do tar xf "$f" ; done
+        for f in *.tar.xz ; do tar xf "$f" ; done
         sudo mv riscv /opt
 
         # Link RISC-V compilers to ccache
